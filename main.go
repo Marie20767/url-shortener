@@ -15,7 +15,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Warning: .env file not found, relying on environment variables")
+		log.Println("Warning: .env file not found")
 	}
 	
 	dbURL := os.Getenv("DATABASE_URL")
@@ -25,7 +25,7 @@ func main() {
 
 	dbConn, err := sql.Open("postgres", dbURL)
 	if err != nil {
-			log.Fatal(err)
+		log.Fatalf("Database connection error: %v", err)
 	}
 
 	defer dbConn.Close()
@@ -35,7 +35,7 @@ func main() {
 		log.Fatalf("Failed to ping DB: %v", err)
 	}
 
-	log.Println("Connected to the database successfully!")
+	log.Println("Connected to database successfully!")
 	
 	e := echo.New()
 	
