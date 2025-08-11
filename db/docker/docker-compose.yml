@@ -1,0 +1,11 @@
+name: sql-db
+services:
+  database:
+    container_name: go-db
+    image: postgres
+    command: ["postgres", "-c", "max_connections=500"]
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
