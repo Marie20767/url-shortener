@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -12,34 +13,42 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
+func connectDB() (*sql.DB, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Warning: .env file not found")
 	}
-	
+
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		log.Fatal("DATABASE_URL environment variable not set")
+		return nil, fmt.Errorf("DATABASE_URL environment variable not set")
 	}
 
 	dbConn, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Fatalf("Database connection error: %v", err)
+		return nil, fmt.Errorf("db connection error: %w", err)
 	}
-
-	defer dbConn.Close()
 
 	err = dbConn.Ping()
 	if err != nil {
-		log.Fatalf("Failed to ping DB: %v", err)
+		dbConn.Close()
+		return nil, fmt.Errorf("failed to ping DB: %w", err)
 	}
 
-	log.Println("Connected to database successfully!")
-	
+	return dbConn, nil
+}
+
+func main() {
+	dbConn, err := connectDB()
+	if err != nil {
+		log.Fatalf("Failed to connect to DB: %v", err)
+	}
+	defer dbConn.Close()
+
+	log.Println("Connected to DB successfully!")
+
 	e := echo.New()
-	
 	routes.RegisterAll(e, dbConn)
-	
+
 	e.Start(":8080")
 }
