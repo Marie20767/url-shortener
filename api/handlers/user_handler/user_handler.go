@@ -2,23 +2,21 @@ package handlers
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
 
-	"github.com/Marie20767/go-web-app-template/internal/db"
+	"github.com/Marie20767/go-web-app-template/internal/store"
 	"github.com/labstack/echo/v4"
 )
 
 type UserHandler struct {
-	DB *sql.DB
+	DB *store.Store
 }
 
 func (h *UserHandler) Hello(c echo.Context) error {
 	name := c.Param("name")
-	queries := db.New(h.DB)
 
-	user, err := queries.GetUserByName(context.Background(), name)
+	user, err := h.DB.Queries.GetUserByName(context.Background(), name)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "User not found"})
 	}
