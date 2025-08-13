@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"web-app/internal/db"
-
+	"github.com/Marie20767/go-web-app-template/internal/db"
 	"github.com/labstack/echo/v4"
 )
 

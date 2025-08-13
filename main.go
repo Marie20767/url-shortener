@@ -6,19 +6,13 @@ import (
 	"log"
 	"os"
 
-	"web-app/api/routes"
-
+	"github.com/Marie20767/go-web-app-template/api/routes"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 )
 
 func connectDB() (*sql.DB, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Warning: .env file not found")
-	}
-
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL environment variable not set")
@@ -39,6 +33,13 @@ func connectDB() (*sql.DB, error) {
 }
 
 func main() {
+	err := godotenv.Load()
+	port := ":" + os.Getenv("PORT")
+
+	if err != nil {
+		log.Println("Warning: .env file not found")
+	}
+
 	dbConn, err := connectDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
@@ -50,5 +51,7 @@ func main() {
 	e := echo.New()
 	routes.RegisterAll(e, dbConn)
 
-	e.Start(":8080")
+	if err := e.Start(port); err != nil {
+		log.Fatal(err)
+	}
 }

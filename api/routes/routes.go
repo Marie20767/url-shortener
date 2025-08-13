@@ -2,8 +2,8 @@ package routes
 
 import (
 	"database/sql"
-	"web-app/api/handlers/user_handler"
 
+	handlers "github.com/Marie20767/go-web-app-template/api/handlers/user_handler"
 	"github.com/labstack/echo/v4"
 )
 
