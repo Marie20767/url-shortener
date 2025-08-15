@@ -32,11 +32,7 @@ func run() error {
 
 	e := echo.New()
 	routes.RegisterAll(e, db)
-	if err := e.Start(":" + port); err != nil {
-		return err
-	}
-
-	return nil
+	return e.Start(":" + port);
 }
 
 func main() {
