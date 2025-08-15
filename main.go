@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -11,32 +12,36 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Warning: .env file not found")
+func run() error {
+	if err := godotenv.Load(); err != nil {
+		return err
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
 	port := os.Getenv("PORT")
-	
 	if dbURL == "" || port == "" {
-		log.Fatalf("Not all environment variables are set: %v", err)
+		return errors.New("not all environment variables are set")
 	}
 
-	
 	db, err := store.NewStore(dbURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to DB: %v", err)
+		return err
 	}
 	defer db.Close()
-
-	log.Println("Connected to DB successfully!")
+	log.Println("connected to DB successfully!")
 
 	e := echo.New()
 	routes.RegisterAll(e, db)
-
 	if err := e.Start(":" + port); err != nil {
-		log.Fatal(err)
+		return err
+	}
+
+	return nil
+}
+
+func main() {
+	if err := run(); err != nil {
+		log.Println("server closed: ", err)
+		os.Exit(1)
 	}
 }
