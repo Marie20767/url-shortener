@@ -10,5 +10,5 @@ import (
 func RegisterAll(e *echo.Echo, KeysDb *keys.KeyStore, URLsDb *urls.UrlStore) {
 	URLHandler := &urlhandlers.URLHandler{KeysDb: KeysDb, URLsDb: URLsDb}
 
-	e.POST("/url", URLHandler.CreateURL)
+	e.POST("/create", URLHandler.CreateShortURL)
 }
