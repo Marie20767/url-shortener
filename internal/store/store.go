@@ -3,13 +3,10 @@ package store
 import (
 	"database/sql"
 	"fmt"
-
-	"github.com/Marie20767/go-web-app-template/internal/store/sqlc"
 )
 
 type Store struct {
 	conn    *sql.DB
-	Queries *sqlc.Queries
 }
 
 func connectDB(dbURL string) (*sql.DB, error) {
@@ -36,7 +33,6 @@ func NewStore(dbURL string) (*Store, error) {
 
 	return &Store{
 		conn:    dbConn,
-		Queries: sqlc.New(dbConn),
 	}, nil
 }
 

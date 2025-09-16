@@ -1,9 +1,0 @@
-version: "2"
-sql:
-  - engine: "postgresql"
-    queries: "internal/store/queries.sql"
-    schema: "internal/store/migrations" # sqlc scans all .sql files to build schema
-    gen:
-      go:
-        package: "sqlc"
-        out: "internal/store/sqlc"

@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Marie20767/go-web-app-template/api/routes"
-	"github.com/Marie20767/go-web-app-template/internal/store"
+	"github.com/Marie20767/url-shortener/api/routes"
+	"github.com/Marie20767/url-shortener/internal/store"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
@@ -32,7 +32,7 @@ func run() error {
 
 	e := echo.New()
 	routes.RegisterAll(e, db)
-	return e.Start(":" + port);
+	return e.Start(":" + port)
 }
 
 func main() {

@@ -1,0 +1,4 @@
+CREATE TABLE keys (
+  "key" TEXT PRIMARY KEY,
+  used BOOLEAN DEFAULT false
+);
