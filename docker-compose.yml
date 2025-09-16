@@ -1,12 +1,20 @@
 services:
   postgres:
     image: postgres
-    container_name: url_keys_container
+    container_name: keys_container
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: url_keys
     volumes:
-      - ./internal/store/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./internal/store/keys/schema/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5433:5432"
+  mongo:
+    image: mongo
+    container_name: urls_container
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    ports:
+      - "27017:27017"

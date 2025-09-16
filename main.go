@@ -1,38 +1,43 @@
 package main
 
 import (
-	"errors"
+	"context"
 	"log"
 	"os"
 
 	"github.com/Marie20767/url-shortener/api/routes"
-	"github.com/Marie20767/url-shortener/internal/store"
-	"github.com/joho/godotenv"
+	"github.com/Marie20767/url-shortener/internal/store/keys"
+	"github.com/Marie20767/url-shortener/internal/store/urls"
+	"github.com/Marie20767/url-shortener/internal/utils"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 )
 
 func run() error {
-	if err := godotenv.Load(); err != nil {
-		return err
-	}
+	ctx := context.Background()
 
-	dbURL := os.Getenv("DATABASE_URL")
-	port := os.Getenv("PORT")
-	if dbURL == "" || port == "" {
-		return errors.New("not all environment variables are set")
-	}
-
-	db, err := store.NewStore(dbURL)
+	c, err := utils.ParseEnv()
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-	log.Println("connected to DB successfully!")
+
+	keysDb, err := keys.NewStore(c.KeysDbURL)
+	if err != nil {
+		return err
+	}
+	defer keysDb.Close()
+	log.Println("connected to keys Db successfully!")
+
+	URLsDb, err := urls.NewStore(c.URLsDbURL)
+	if err != nil {
+		return err
+	}
+	defer URLsDb.Close(ctx)
+	log.Println("connected to URLs Db successfully!")
 
 	e := echo.New()
-	routes.RegisterAll(e, db)
-	return e.Start(":" + port)
+	routes.RegisterAll(e, keysDb, URLsDb)
+	return e.Start(":" + c.Port)
 }
 
 func main() {

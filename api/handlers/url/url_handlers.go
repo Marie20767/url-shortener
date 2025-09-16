@@ -3,12 +3,14 @@ package urlhandlers
 import (
 	"net/http"
 
-	"github.com/Marie20767/url-shortener/internal/store"
+	"github.com/Marie20767/url-shortener/internal/store/keys"
+	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/labstack/echo/v4"
 )
 
 type URLHandler struct {
-	DB *store.Store
+	URLsDb *urls.UrlStore
+	KeysDb *keys.KeyStore
 }
 
 func (h *URLHandler) CreateURL(c echo.Context) error {

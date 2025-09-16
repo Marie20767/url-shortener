@@ -1,15 +1,15 @@
-package store
+package keys
 
 import (
 	"database/sql"
 	"fmt"
 )
 
-type Store struct {
-	conn    *sql.DB
+type KeyStore struct {
+	conn *sql.DB
 }
 
-func connectDB(dbURL string) (*sql.DB, error) {
+func connectDb(dbURL string) (*sql.DB, error) {
 	dbConn, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("db connection error: %w", err)
@@ -24,18 +24,18 @@ func connectDB(dbURL string) (*sql.DB, error) {
 	return dbConn, nil
 }
 
-func NewStore(dbURL string) (*Store, error) {
-	dbConn, err := connectDB(dbURL)
+func NewStore(dbURL string) (*KeyStore, error) {
+	dbConn, err := connectDb(dbURL)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &Store{
-		conn:    dbConn,
+	return &KeyStore{
+		conn: dbConn,
 	}, nil
 }
 
-func (s *Store) Close() error {
+func (s *KeyStore) Close() error {
 	return s.conn.Close()
 }

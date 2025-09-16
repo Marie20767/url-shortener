@@ -1,0 +1,4 @@
+CREATE TABLE keys (
+  "key" VARCHAR(8) CHECK (LENGTH("key") = 8) PRIMARY KEY,
+  used BOOLEAN DEFAULT false
+);
