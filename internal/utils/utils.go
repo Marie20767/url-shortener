@@ -7,13 +7,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Config struct {
+type config struct {
 	Port      string
 	KeysDbURL string
 	URLsDbURL string
 }
 
-func ParseEnv() (*Config, error) {
+func ParseEnv() (*config, error) {
 	if err := godotenv.Load(); err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func ParseEnv() (*Config, error) {
 		return nil, errors.New("not all environment variables are set")
 	}
 
-	return &Config{
+	return &config{
 		Port:      port,
 		KeysDbURL: keysDbURL,
 		URLsDbURL: URLsDbURL,
