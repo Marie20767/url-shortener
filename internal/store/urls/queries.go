@@ -33,7 +33,7 @@ func (s *UrlStore) DeleteURLs(ctx context.Context) ([]string, error) {
 
 	filter := bson.M{
 		"expiry": bson.M{
-			"$gt": time.Now(),
+			"$lte": time.Now(),
 		},
 	}
 
@@ -41,6 +41,7 @@ func (s *UrlStore) DeleteURLs(ctx context.Context) ([]string, error) {
 
 	for {
 		var deleted URL
+
 		err := collection.FindOneAndDelete(ctx, filter).Decode(&deleted)
 		if err == mongo.ErrNoDocuments {
 			break
