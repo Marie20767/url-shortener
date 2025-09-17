@@ -16,10 +16,10 @@ type URL struct {
 
 const collection = "urls"
 
-func (s *UrlStore) CreateURL(ctx context.Context, URL *URL) error {
+func (s *UrlStore) CreateShortURL(c context.Context, u *URL) error {
 	collection := s.conn.Collection(collection)
 
-	_, err := collection.InsertOne(ctx, URL)
+	_, err := collection.InsertOne(c, u)
 
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func (s *UrlStore) CreateURL(ctx context.Context, URL *URL) error {
 	return nil
 }
 
-func (s *UrlStore) DeleteURLs(ctx context.Context) ([]string, error) {
+func (s *UrlStore) DeleteURLs(c context.Context) ([]string, error) {
 	collection := s.conn.Collection(collection)
 
 	filter := bson.M{
@@ -42,7 +42,7 @@ func (s *UrlStore) DeleteURLs(ctx context.Context) ([]string, error) {
 	for {
 		var deleted URL
 
-		err := collection.FindOneAndDelete(ctx, filter).Decode(&deleted)
+		err := collection.FindOneAndDelete(c, filter).Decode(&deleted)
 		if err == mongo.ErrNoDocuments {
 			break
 		} else if err != nil {
@@ -54,11 +54,11 @@ func (s *UrlStore) DeleteURLs(ctx context.Context) ([]string, error) {
 	return deletedKeys, nil
 }
 
-func (s *UrlStore) GetURL(ctx context.Context, key string) (string, error) {
+func (s *UrlStore) GetLongURL(c context.Context, k string) (string, error) {
 	var res URL
 	collection := s.conn.Collection(collection)
 
-	err := collection.FindOne(ctx, bson.M{"key": key}).Decode(&res)
+	err := collection.FindOne(c, bson.M{"key": k}).Decode(&res)
 	if err != nil {
 		return "", err
 	}
