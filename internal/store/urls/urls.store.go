@@ -36,6 +36,6 @@ func NewStore(dbURL string) (*UrlStore, error) {
 	}, nil
 }
 
-func (s *UrlStore) Close(ctx context.Context) {
-	s.conn.Client().Disconnect(ctx)
+func (s *UrlStore) Close(ctx context.Context) error {
+	return s.conn.Client().Disconnect(ctx)
 }
