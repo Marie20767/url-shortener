@@ -16,19 +16,19 @@ import (
 func run() error {
 	ctx := context.Background()
 
-	c, err := utils.ParseEnv()
+	cfg, err := utils.ParseEnv()
 	if err != nil {
 		return err
 	}
 
-	keysDb, err := keys.NewStore(c.KeysDbURL)
+	keysDb, err := keys.NewStore(cfg.KeysDbURL)
 	if err != nil {
 		return err
 	}
 	defer keysDb.Close()
 	log.Println("connected to keys Db successfully!")
 
-	URLsDb, err := urls.NewStore(c.URLsDbURL)
+	URLsDb, err := urls.NewStore(cfg.URLsDbURL)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func run() error {
 
 	e := echo.New()
 	routes.RegisterAll(e, keysDb, URLsDb)
-	return e.Start(":" + c.Port)
+	return e.Start(":" + cfg.Port)
 }
 
 func main() {
