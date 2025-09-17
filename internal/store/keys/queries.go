@@ -5,8 +5,8 @@ type Key struct {
 	Used bool
 }
 
-func (s *KeyStore) GetKeys() ([]*Key, error) {
-	rows, err := s.conn.Query("SELECT key, used FROM keys WHERE used = true")
+func (s *KeyStore) GetUnusedKeys() ([]*Key, error) {
+	rows, err := s.conn.Query("SELECT key, used FROM keys WHERE used = false")
 	if err != nil {
 		return nil, err
 	}
@@ -29,8 +29,8 @@ func (s *KeyStore) GetKeys() ([]*Key, error) {
 	return keys, nil
 }
 
-func (s *KeyStore) CreateKey(key string) error {
-	_, err := s.conn.Exec("INSERT INTO keys (key) VALUES ($1)", key)
+func (s *KeyStore) CreateKey(k string) error {
+	_, err := s.conn.Exec("INSERT INTO keys (key) VALUES ($1)", k)
 
 	if err != nil {
 		return err
@@ -39,8 +39,8 @@ func (s *KeyStore) CreateKey(key string) error {
 	return nil
 }
 
-func (s *KeyStore) UpdateKey(key string, val bool) error {
-	_, err := s.conn.Exec("UPDATE keys SET used = $1 WHERE key = $2", val, key)
+func (s *KeyStore) UpdateKey(k string, u bool) error {
+	_, err := s.conn.Exec("UPDATE keys SET used = $1 WHERE = $2", k, u)
 
 	if err != nil {
 		return err

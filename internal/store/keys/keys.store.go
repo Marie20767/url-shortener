@@ -17,7 +17,6 @@ func connectDb(dbURL string) (*sql.DB, error) {
 
 	err = dbConn.Ping()
 	if err != nil {
-		dbConn.Close()
 		return nil, fmt.Errorf("failed to ping DB: %w", err)
 	}
 
@@ -26,7 +25,6 @@ func connectDb(dbURL string) (*sql.DB, error) {
 
 func NewStore(dbURL string) (*KeyStore, error) {
 	dbConn, err := connectDb(dbURL)
-
 	if err != nil {
 		return nil, err
 	}
