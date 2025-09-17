@@ -4,14 +4,17 @@ import (
 	"context"
 	"time"
 
+	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
+type LongURL string
+
 type URL struct {
-	Key    string    `bson:"key"`
-	URL    string    `bson:"url"`
-	Expiry time.Time `bson:"expiry"`
+	Key    keys.KeyValue `bson:"key"`
+	URL    LongURL        `bson:"url"`
+	Expiry time.Time     `bson:"expiry"`
 }
 
 const collection = "urls"
@@ -28,7 +31,7 @@ func (s *UrlStore) CreateShortURL(c context.Context, u *URL) error {
 	return nil
 }
 
-func (s *UrlStore) DeleteURLs(c context.Context) ([]string, error) {
+func (s *UrlStore) DeleteURLs(c context.Context) ([]keys.KeyValue, error) {
 	collection := s.conn.Collection(collection)
 
 	filter := bson.M{
@@ -37,7 +40,7 @@ func (s *UrlStore) DeleteURLs(c context.Context) ([]string, error) {
 		},
 	}
 
-	var deletedKeys []string
+	var deletedKeys []keys.KeyValue
 
 	for {
 		var deleted URL
@@ -54,7 +57,7 @@ func (s *UrlStore) DeleteURLs(c context.Context) ([]string, error) {
 	return deletedKeys, nil
 }
 
-func (s *UrlStore) GetLongURL(c context.Context, k string) (string, error) {
+func (s *UrlStore) GetLongURL(c context.Context, k keys.KeyValue) (LongURL, error) {
 	var res URL
 	collection := s.conn.Collection(collection)
 

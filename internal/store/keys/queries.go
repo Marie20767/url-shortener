@@ -1,7 +1,9 @@
 package keys
 
+type KeyValue string
+
 type Key struct {
-	Key  string
+	Key  KeyValue
 	Used bool
 }
 
@@ -29,7 +31,7 @@ func (s *KeyStore) GetUnusedKeys() ([]*Key, error) {
 	return keys, nil
 }
 
-func (s *KeyStore) CreateKey(k string) error {
+func (s *KeyStore) CreateKey(k KeyValue) error {
 	_, err := s.conn.Exec("INSERT INTO keys (key) VALUES ($1)", k)
 
 	if err != nil {
@@ -39,7 +41,7 @@ func (s *KeyStore) CreateKey(k string) error {
 	return nil
 }
 
-func (s *KeyStore) UpdateKey(k string, u bool) error {
+func (s *KeyStore) UpdateKey(k KeyValue, u bool) error {
 	_, err := s.conn.Exec("UPDATE keys SET used = $1 WHERE = $2", k, u)
 
 	if err != nil {
