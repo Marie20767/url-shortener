@@ -1,4 +1,18 @@
 start:
 	go run main.go
+
+start-multiple:
+	@echo "Starting servers..."
+	PORT=8081 go run main.go &
+	PORT=8082 go run main.go &
+	PORT=8083 go run main.go &
+	wait
+
+stop-multiple:
+	@echo "Stopping servers..."
+	@lsof -ti tcp:8081 | xargs kill -9 || true
+	@lsof -ti tcp:8082 | xargs kill -9 || true
+	@lsof -ti tcp:8083 | xargs kill -9 || true
+
 lint:
 	golangci-lint run
