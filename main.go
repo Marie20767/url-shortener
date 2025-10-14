@@ -35,7 +35,7 @@ func run() error {
 	defer keyDb.Close()
 	log.Println("connected to key Db successfully!")
 
-	urlDb, err := urls.NewStore(cfg.UrlDbUrl)
+	urlDb, err := urls.NewStore(cfg.UrlDbUrl, cfg.UrlDbName)
 	if err != nil {
 		return err
 	}

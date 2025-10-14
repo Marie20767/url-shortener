@@ -11,6 +11,7 @@ type config struct {
 	Port     string
 	KeyDbUrl string
 	UrlDbUrl string
+	UrlDbName string
 }
 
 func ParseEnv() (*config, error) {
@@ -20,6 +21,7 @@ func ParseEnv() (*config, error) {
 
 	keyDbUrl := os.Getenv("KEY_DB_URL")
 	urlDbUrl := os.Getenv("URL_DB_URL")
+	urlDbName := os.Getenv("URL_DB_Name")
 	port := os.Getenv("PORT")
 
 	if keyDbUrl == "" || urlDbUrl == "" || port == "" {
@@ -30,5 +32,6 @@ func ParseEnv() (*config, error) {
 		Port:     port,
 		KeyDbUrl: keyDbUrl,
 		UrlDbUrl: urlDbUrl,
+		UrlDbName: urlDbName,
 	}, nil
 }

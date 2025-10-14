@@ -2,7 +2,6 @@ package urls
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -13,19 +12,18 @@ type UrlStore struct {
 	conn *mongo.Database
 }
 
-func connectDb(dbUrl string) (*mongo.Database, error) {
+func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
 	clientOpts := options.Client().ApplyURI(dbUrl).SetConnectTimeout(5 * time.Second)
 	mongoClient, err := mongo.Connect(clientOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	dbName := os.Getenv("URL_DB_NAME")
 	return mongoClient.Database(dbName), nil
 }
 
-func NewStore(dbUrl string) (*UrlStore, error) {
-	dbConn, err := connectDb(dbUrl)
+func NewStore(dbUrl, dbName string) (*UrlStore, error) {
+	dbConn, err := connectDb(dbUrl, dbName)
 
 	if err != nil {
 		return nil, err
