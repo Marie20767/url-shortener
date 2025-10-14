@@ -8,9 +8,9 @@ import (
 )
 
 type config struct {
-	Port      string
-	KeysDbURL string
-	URLsDbURL string
+	Port     string
+	KeyDbUrl string
+	UrlDbUrl string
 }
 
 func ParseEnv() (*config, error) {
@@ -18,17 +18,17 @@ func ParseEnv() (*config, error) {
 		return nil, err
 	}
 
-	keysDbURL := os.Getenv("KEYS_DB_URL")
-	URLsDbURL := os.Getenv("URLS_DB_URL")
+	keyDbUrl := os.Getenv("KEY_DB_URL")
+	urlDbUrl := os.Getenv("URL_DB_URL")
 	port := os.Getenv("PORT")
 
-	if keysDbURL == "" || URLsDbURL == "" || port == "" {
+	if keyDbUrl == "" || urlDbUrl == "" || port == "" {
 		return nil, errors.New("not all environment variables are set")
 	}
 
 	return &config{
-		Port:      port,
-		KeysDbURL: keysDbURL,
-		URLsDbURL: URLsDbURL,
+		Port:     port,
+		KeyDbUrl: keyDbUrl,
+		UrlDbUrl: urlDbUrl,
 	}, nil
 }

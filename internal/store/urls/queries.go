@@ -9,20 +9,20 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type LongURL string
+type longUrl string
 
-type URL struct {
-	Key    keys.KeyValue `bson:"key"`
-	URL    LongURL        `bson:"url"`
+type urlData struct {
+	Key    keys.KeyValue `bson:"key_value"`
+	Url    longUrl       `bson:"url"`
 	Expiry time.Time     `bson:"expiry"`
 }
 
 const collection = "urls"
 
-func (s *UrlStore) CreateShortURL(c context.Context, u *URL) error {
+func (s *UrlStore) CreateShortUrl(ctx context.Context, url *urlData) error {
 	collection := s.conn.Collection(collection)
 
-	_, err := collection.InsertOne(c, u)
+	_, err := collection.InsertOne(ctx, url)
 
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (s *UrlStore) CreateShortURL(c context.Context, u *URL) error {
 	return nil
 }
 
-func (s *UrlStore) DeleteURLs(c context.Context) ([]keys.KeyValue, error) {
+func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
 	collection := s.conn.Collection(collection)
 
 	filter := bson.M{
@@ -43,9 +43,9 @@ func (s *UrlStore) DeleteURLs(c context.Context) ([]keys.KeyValue, error) {
 	var deletedKeys []keys.KeyValue
 
 	for {
-		var deleted URL
+		var deleted urlData
 
-		err := collection.FindOneAndDelete(c, filter).Decode(&deleted)
+		err := collection.FindOneAndDelete(ctx, filter).Decode(&deleted)
 		if err == mongo.ErrNoDocuments {
 			break
 		} else if err != nil {
@@ -57,14 +57,14 @@ func (s *UrlStore) DeleteURLs(c context.Context) ([]keys.KeyValue, error) {
 	return deletedKeys, nil
 }
 
-func (s *UrlStore) GetLongURL(c context.Context, k keys.KeyValue) (LongURL, error) {
-	var res URL
+func (s *UrlStore) GetLongUrl(ctx context.Context, key keys.KeyValue) (longUrl, error) {
+	var res urlData
 	collection := s.conn.Collection(collection)
 
-	err := collection.FindOne(c, bson.M{"key": k}).Decode(&res)
+	err := collection.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
 	if err != nil {
 		return "", err
 	}
 
-	return res.URL, nil
+	return res.Url, nil
 }

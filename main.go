@@ -13,6 +13,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func main() {
+	if err := run(); err != nil {
+		log.Println("server closed: ", err)
+		os.Exit(1)
+	}
+}
+
 func run() error {
 	ctx := context.Background()
 
@@ -21,28 +28,21 @@ func run() error {
 		return err
 	}
 
-	keysDb, err := keys.NewStore(cfg.KeysDbURL)
+	keyDb, err := keys.NewStore(cfg.KeyDbUrl)
 	if err != nil {
 		return err
 	}
-	defer keysDb.Close()
-	log.Println("connected to keys Db successfully!")
+	defer keyDb.Close()
+	log.Println("connected to key Db successfully!")
 
-	URLsDb, err := urls.NewStore(cfg.URLsDbURL)
+	urlDb, err := urls.NewStore(cfg.UrlDbUrl)
 	if err != nil {
 		return err
 	}
-	defer URLsDb.Close(ctx)
-	log.Println("connected to URLs Db successfully!")
+	defer urlDb.Close(ctx)
+	log.Println("connected to url Db successfully!")
 
 	e := echo.New()
-	routes.RegisterAll(e, keysDb, URLsDb)
+	routes.RegisterAll(e, keyDb, urlDb)
 	return e.Start(":" + cfg.Port)
-}
-
-func main() {
-	if err := run(); err != nil {
-		log.Println("server closed: ", err)
-		os.Exit(1)
-	}
 }

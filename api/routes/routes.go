@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func RegisterAll(e *echo.Echo, kDb *keys.KeyStore, uDb *urls.UrlStore) {
-	URLHandler := &urlhandlers.URLHandler{KeysDb: kDb, URLsDb: uDb}
+func RegisterAll(e *echo.Echo, keyDb *keys.KeyStore, urlDb *urls.UrlStore) {
+	urlHandler := &urlhandlers.UrlHandler{KeyDb: keyDb, UrlDb: urlDb}
 
-	e.POST("/create", URLHandler.CreateShortURL)
+	e.POST("/create", urlHandler.CreateShortUrl)
 }

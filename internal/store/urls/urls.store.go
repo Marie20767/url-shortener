@@ -13,19 +13,19 @@ type UrlStore struct {
 	conn *mongo.Database
 }
 
-func connectDb(dbURL string) (*mongo.Database, error) {
-	clientOpts := options.Client().ApplyURI(dbURL).SetConnectTimeout(5 * time.Second)
+func connectDb(dbUrl string) (*mongo.Database, error) {
+	clientOpts := options.Client().ApplyURI(dbUrl).SetConnectTimeout(5 * time.Second)
 	mongoClient, err := mongo.Connect(clientOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	dbName := os.Getenv("URLS_DB_Name")
+	dbName := os.Getenv("URL_DB_NAME")
 	return mongoClient.Database(dbName), nil
 }
 
-func NewStore(dbURL string) (*UrlStore, error) {
-	dbConn, err := connectDb(dbURL)
+func NewStore(dbUrl string) (*UrlStore, error) {
+	dbConn, err := connectDb(dbUrl)
 
 	if err != nil {
 		return nil, err

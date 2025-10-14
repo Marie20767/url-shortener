@@ -2,23 +2,23 @@ package keys
 
 type KeyValue string
 
-type Key struct {
-	Key  KeyValue
-	Used bool
+type key struct {
+	key  KeyValue
+	used bool
 }
 
-func (s *KeyStore) GetUnusedKeys() ([]*Key, error) {
-	rows, err := s.conn.Query("SELECT key, used FROM keys WHERE used = false")
+func (s *KeyStore) GetUnusedKeys() ([]*key, error) {
+	rows, err := s.conn.Query("SELECT key_value, used FROM keys WHERE used = false")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var keys []*Key
+	var keys []*key
 
 	for rows.Next() {
-		k := &Key{}
-		if err := rows.Scan(&k.Key, &k.Used); err != nil {
+		k := &key{}
+		if err := rows.Scan(&k.key, &k.used); err != nil {
 			return nil, err
 		}
 		keys = append(keys, k)
@@ -31,8 +31,8 @@ func (s *KeyStore) GetUnusedKeys() ([]*Key, error) {
 	return keys, nil
 }
 
-func (s *KeyStore) CreateKey(k KeyValue) error {
-	_, err := s.conn.Exec("INSERT INTO keys (key) VALUES ($1)", k)
+func (s *KeyStore) CreateKey(key KeyValue) error {
+	_, err := s.conn.Exec("INSERT INTO keys (key_value) VALUES ($1)", key)
 
 	if err != nil {
 		return err
@@ -41,8 +41,8 @@ func (s *KeyStore) CreateKey(k KeyValue) error {
 	return nil
 }
 
-func (s *KeyStore) UpdateKey(k KeyValue, u bool) error {
-	_, err := s.conn.Exec("UPDATE keys SET used = $1 WHERE = $2", k, u)
+func (s *KeyStore) UpdateKey(used bool, key KeyValue) error {
+	_, err := s.conn.Exec("UPDATE keys SET used = $1 WHERE key_value = $2", used, key)
 
 	if err != nil {
 		return err

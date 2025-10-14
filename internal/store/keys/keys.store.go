@@ -9,8 +9,8 @@ type KeyStore struct {
 	conn *sql.DB
 }
 
-func connectDb(dbURL string) (*sql.DB, error) {
-	dbConn, err := sql.Open("postgres", dbURL)
+func connectDb(dbUrl string) (*sql.DB, error) {
+	dbConn, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		return nil, fmt.Errorf("db connection error: %w", err)
 	}
@@ -23,8 +23,8 @@ func connectDb(dbURL string) (*sql.DB, error) {
 	return dbConn, nil
 }
 
-func NewStore(dbURL string) (*KeyStore, error) {
-	dbConn, err := connectDb(dbURL)
+func NewStore(dbUrl string) (*KeyStore, error) {
+	dbConn, err := connectDb(dbUrl)
 	if err != nil {
 		return nil, err
 	}

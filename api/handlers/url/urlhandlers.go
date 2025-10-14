@@ -10,22 +10,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type URLHandler struct {
-	URLsDb *urls.UrlStore
-	KeysDb *keys.KeyStore
+type UrlHandler struct {
+	UrlDb *urls.UrlStore
+	KeyDb *keys.KeyStore
 }
 
-
-func (h *URLHandler) CreateShortURL(c echo.Context) error {
+func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}
 
 	domain := os.Getenv("API_DOMAIN")
 	key := "123xbcaa"
-	shortURL := domain + key
+	shortUrl := domain + key
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"url": shortURL,
+	return ctx.JSON(http.StatusOK, map[string]string{
+		"url": shortUrl,
 	})
 }
