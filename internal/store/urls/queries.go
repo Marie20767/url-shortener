@@ -12,17 +12,15 @@ import (
 type longUrl string
 
 type urlData struct {
-	Key    keys.KeyValue `bson:"key_value"`
-	Url    longUrl       `bson:"url"`
-	Expiry time.Time     `bson:"expiry"`
+	key    keys.KeyValue `bson:"key_value"`
+	url    longUrl       `bson:"url"`
+	expiry time.Time     `bson:"expiry"`
 }
 
-const collection = "urls"
-
 func (s *UrlStore) CreateShortUrl(ctx context.Context, url *urlData) error {
-	collection := s.conn.Collection(collection)
+	db := s.conn.Collection(s.collection)
 
-	_, err := collection.InsertOne(ctx, url)
+	_, err := db.InsertOne(ctx, url)
 
 	if err != nil {
 		return err
@@ -32,7 +30,7 @@ func (s *UrlStore) CreateShortUrl(ctx context.Context, url *urlData) error {
 }
 
 func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
-	collection := s.conn.Collection(collection)
+	db := s.conn.Collection(s.collection)
 
 	filter := bson.M{
 		"expiry": bson.M{
@@ -45,13 +43,13 @@ func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
 	for {
 		var deleted urlData
 
-		err := collection.FindOneAndDelete(ctx, filter).Decode(&deleted)
+		err := db.FindOneAndDelete(ctx, filter).Decode(&deleted)
 		if err == mongo.ErrNoDocuments {
 			break
 		} else if err != nil {
 			return nil, err
 		}
-		deletedKeys = append(deletedKeys, deleted.Key)
+		deletedKeys = append(deletedKeys, deleted.key)
 	}
 
 	return deletedKeys, nil
@@ -59,12 +57,12 @@ func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
 
 func (s *UrlStore) GetLongUrl(ctx context.Context, key keys.KeyValue) (longUrl, error) {
 	var res urlData
-	collection := s.conn.Collection(collection)
+	db := s.conn.Collection(s.collection)
 
-	err := collection.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
+	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
 	if err != nil {
 		return "", err
 	}
 
-	return res.Url, nil
+	return res.url, nil
 }

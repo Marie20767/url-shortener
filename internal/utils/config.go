@@ -1,4 +1,4 @@
-package utils
+package config
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type config struct {
+type cfg struct {
 	Port      string
 	Domain    string
 	KeyDbUrl  string
@@ -15,7 +15,7 @@ type config struct {
 	UrlDbName string
 }
 
-func ParseEnv() (*config, error) {
+func ParseEnv() (*cfg, error) {
 	if err := godotenv.Load(); err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func ParseEnv() (*config, error) {
 		envVars[key] = &value
 	}
 
-	cfg := &config{
+	cfg := &cfg{
 		KeyDbUrl:  *envVars["KEY_DB_URL"],
 		UrlDbUrl:  *envVars["URL_DB_URL"],
 		UrlDbName: *envVars["URL_DB_NAME"],

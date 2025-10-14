@@ -10,6 +10,7 @@ import (
 
 type UrlStore struct {
 	conn *mongo.Database
+	collection string
 }
 
 func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
@@ -31,6 +32,7 @@ func NewStore(dbUrl, dbName string) (*UrlStore, error) {
 
 	return &UrlStore{
 		conn: dbConn,
+		collection: "urls",
 	}, nil
 }
 

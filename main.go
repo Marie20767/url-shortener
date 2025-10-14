@@ -24,7 +24,7 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
-	cfg, err := utils.ParseEnv()
+	cfg, err := config.ParseEnv()
 	if err != nil {
 		return err
 	}
