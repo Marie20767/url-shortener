@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/Marie20767/url-shortener/api/handlers/url"
 	"github.com/Marie20767/url-shortener/api/routes"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
@@ -43,6 +44,7 @@ func run() error {
 	log.Println("connected to url Db successfully!")
 
 	e := echo.New()
-	routes.RegisterAll(e, keyDb, urlDb)
+	urlHandler := &urlhandlers.UrlHandler{KeyDb: keyDb, UrlDb: urlDb, ApiDomain: cfg.Domain}
+	routes.RegisterAll(e, urlHandler)
 	return e.Start(":" + cfg.Port)
 }

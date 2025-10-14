@@ -8,9 +8,10 @@ import (
 )
 
 type config struct {
-	Port     string
-	KeyDbUrl string
-	UrlDbUrl string
+	Port      string
+	Domain    string
+	KeyDbUrl  string
+	UrlDbUrl  string
 	UrlDbName string
 }
 
@@ -19,19 +20,29 @@ func ParseEnv() (*config, error) {
 		return nil, err
 	}
 
-	keyDbUrl := os.Getenv("KEY_DB_URL")
-	urlDbUrl := os.Getenv("URL_DB_URL")
-	urlDbName := os.Getenv("URL_DB_Name")
-	port := os.Getenv("PORT")
-
-	if keyDbUrl == "" || urlDbUrl == "" || port == "" {
-		return nil, errors.New("not all environment variables are set")
+	envVars := map[string]*string{
+		"KEY_DB_URL":  nil,
+		"URL_DB_URL":  nil,
+		"URL_DB_NAME": nil,
+		"PORT":        nil,
+		"API_DOMAIN":  nil,
 	}
 
-	return &config{
-		Port:     port,
-		KeyDbUrl: keyDbUrl,
-		UrlDbUrl: urlDbUrl,
-		UrlDbName: urlDbName,
-	}, nil
+	for key := range envVars {
+		value := os.Getenv(key)
+		if value == "" {
+			return nil, errors.New("not all environment variables are set")
+		}
+		envVars[key] = &value
+	}
+
+	cfg := &config{
+		KeyDbUrl:  *envVars["KEY_DB_URL"],
+		UrlDbUrl:  *envVars["URL_DB_URL"],
+		UrlDbName: *envVars["URL_DB_NAME"],
+		Port:      *envVars["PORT"],
+		Domain:    *envVars["API_DOMAIN"],
+	}
+
+	return cfg, nil
 }

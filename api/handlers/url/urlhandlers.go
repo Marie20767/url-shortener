@@ -2,7 +2,6 @@ package urlhandlers
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
@@ -11,8 +10,9 @@ import (
 )
 
 type UrlHandler struct {
-	UrlDb *urls.UrlStore
-	KeyDb *keys.KeyStore
+	UrlDb     *urls.UrlStore
+	KeyDb     *keys.KeyStore
+	ApiDomain string
 }
 
 func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
@@ -20,9 +20,8 @@ func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
 		return err
 	}
 
-	domain := os.Getenv("API_DOMAIN")
 	key := "123xbcaa"
-	shortUrl := domain + key
+	shortUrl := h.ApiDomain + key
 
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"url": shortUrl,
