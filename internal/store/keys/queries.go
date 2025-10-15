@@ -1,5 +1,11 @@
 package keys
 
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5"
+)
+
 type KeyValue string
 
 type key struct {
@@ -7,33 +13,28 @@ type key struct {
 	used bool
 }
 
-func (s *KeyStore) GetUnusedKeys() ([]*key, error) {
-	rows, err := s.conn.Query("SELECT key_value, used FROM keys WHERE used = false")
+func (s *KeyStore) GetUnusedKeys(ctx context.Context) ([]*key, error) {
+	rows, err := s.pool.Query(ctx, "SELECT key_value, used FROM keys WHERE used = false")
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var keys []*key
-
-	for rows.Next() {
+	keys, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*key, error) {
 		k := &key{}
-		if err := rows.Scan(&k.key, &k.used); err != nil {
+		if err := row.Scan(&k.key, &k.used); err != nil {
 			return nil, err
 		}
-		keys = append(keys, k)
-	}
-
-	if err := rows.Err(); err != nil {
+		return k, nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
 	return keys, nil
 }
 
-func (s *KeyStore) CreateKey(key KeyValue) error {
-	_, err := s.conn.Exec("INSERT INTO keys (key_value) VALUES ($1)", key)
-
+func (s *KeyStore) CreateKey(ctx context.Context, key KeyValue) error {
+	_, err := s.pool.Exec(ctx, "INSERT INTO keys (key_value) VALUES ($1)", key)
 	if err != nil {
 		return err
 	}
@@ -41,9 +42,8 @@ func (s *KeyStore) CreateKey(key KeyValue) error {
 	return nil
 }
 
-func (s *KeyStore) UpdateKey(used bool, key KeyValue) error {
-	_, err := s.conn.Exec("UPDATE keys SET used = $1 WHERE key_value = $2", used, key)
-
+func (s *KeyStore) UpdateKey(ctx context.Context, used bool, key KeyValue) error {
+	_, err := s.pool.Exec(ctx, "UPDATE keys SET used = $1 WHERE key_value = $2", used, key)
 	if err != nil {
 		return err
 	}

@@ -29,19 +29,19 @@ func run() error {
 		return err
 	}
 
-	keyDb, err := keys.NewStore(cfg.KeyDbUrl)
+	keyDb, err := keys.NewStore(ctx, cfg.KeyDbUrl)
 	if err != nil {
 		return err
 	}
 	defer keyDb.Close()
-	log.Println("connected to key Db successfully!")
+	log.Println("connected to key db successfully!")
 
 	urlDb, err := urls.NewStore(cfg.UrlDbUrl, cfg.UrlDbName)
 	if err != nil {
 		return err
 	}
 	defer urlDb.Close(ctx)
-	log.Println("connected to url Db successfully!")
+	log.Println("connected to url db successfully!")
 
 	e := echo.New()
 	urlHandler := &urlhandlers.UrlHandler{KeyDb: keyDb, UrlDb: urlDb, ApiDomain: cfg.Domain}

@@ -19,9 +19,7 @@ type urlData struct {
 
 func (s *UrlStore) CreateShortUrl(ctx context.Context, url *urlData) error {
 	db := s.conn.Collection(s.collection)
-
 	_, err := db.InsertOne(ctx, url)
-
 	if err != nil {
 		return err
 	}
@@ -58,7 +56,6 @@ func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
 func (s *UrlStore) GetLongUrl(ctx context.Context, key keys.KeyValue) (longUrl, error) {
 	var res urlData
 	db := s.conn.Collection(s.collection)
-
 	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
 	if err != nil {
 		return "", err

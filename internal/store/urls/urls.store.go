@@ -25,7 +25,6 @@ func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
 
 func NewStore(dbUrl, dbName string) (*UrlStore, error) {
 	dbConn, err := connectDb(dbUrl, dbName)
-
 	if err != nil {
 		return nil, err
 	}

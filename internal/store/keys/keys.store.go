@@ -1,39 +1,31 @@
 package keys
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type KeyStore struct {
-	conn *sql.DB
+	pool *pgxpool.Pool
 }
 
-func connectDb(dbUrl string) (*sql.DB, error) {
-	dbConn, err := sql.Open("postgres", dbUrl)
-	if err != nil {
-		return nil, fmt.Errorf("db connection error: %w", err)
-	}
-
-	err = dbConn.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("failed to ping DB: %w", err)
-	}
-
-	return dbConn, nil
-}
-
-func NewStore(dbUrl string) (*KeyStore, error) {
-	dbConn, err := connectDb(dbUrl)
+func NewStore(ctx context.Context, dbUrl string) (*KeyStore, error) {
+	dbPool, err := pgxpool.New(ctx, dbUrl)
 	if err != nil {
 		return nil, err
 	}
 
+	if err := dbPool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to connect to db: %w", err)
+	}
+
 	return &KeyStore{
-		conn: dbConn,
+		pool: dbPool,
 	}, nil
 }
 
-func (s *KeyStore) Close() error {
-	return s.conn.Close()
+func (s *KeyStore) Close() {
+	s.pool.Close()
 }
