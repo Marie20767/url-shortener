@@ -1,11 +1,20 @@
-name: sql-db
 services:
-  database:
-    container_name: go-db
+  postgres:
     image: postgres
-    command: ["postgres", "-c", "max_connections=500"]
+    container_name: keys_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: url_keys
+    volumes:
+      - ./internal/store/keys/schema/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5433:5432"
+  mongo:
+    image: mongo
+    container_name: urls_container
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    ports:
+      - "27017:27017"
