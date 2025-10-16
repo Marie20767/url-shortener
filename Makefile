@@ -15,10 +15,10 @@ stop-multiple:
 	@lsof -ti tcp:8083 | xargs kill -9 || true
 
 start-db:
-  docker-compose up -d
+	docker-compose up -d
 
 stop-db:
-  docker-compose down
+	docker-compose down
 
 lint:
 	golangci-lint run

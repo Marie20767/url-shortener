@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres
-    container_name: keys_container
+    container_name: key_container
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -12,7 +12,7 @@ services:
       - "5433:5432"
   mongo:
     image: mongo
-    container_name: urls_container
+    container_name: url_container
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongo
       MONGO_INITDB_ROOT_PASSWORD: mongo
