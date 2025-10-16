@@ -6,10 +6,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type KeyValue string
-
 type key struct {
-	key  KeyValue
+	key  string
 	used bool
 }
 
@@ -33,16 +31,29 @@ func (s *KeyStore) GetUnusedKeys(ctx context.Context) ([]*key, error) {
 	return keys, nil
 }
 
-func (s *KeyStore) CreateKey(ctx context.Context, key KeyValue) error {
-	_, err := s.pool.Exec(ctx, "INSERT INTO keys (key_value) VALUES ($1)", key)
-	if err != nil {
-		return err
+func (s *KeyStore) InsertKeys(ctx context.Context, keys []string) (int, error) {
+	batch := &pgx.Batch{}
+
+	for _, key := range keys {
+		batch.Queue("INSERT INTO keys (key_value) VALUES ($1) ON CONFLICT DO NOTHING", key)
 	}
 
-	return nil
+	results := s.pool.SendBatch(ctx, batch)
+	defer results.Close()
+
+	var totalInserted int64
+	for range keys {
+		cmdTag, err := results.Exec()
+		if err != nil {
+			return 0, err
+		}
+		totalInserted += cmdTag.RowsAffected()
+	}
+
+	return int(totalInserted), nil
 }
 
-func (s *KeyStore) UpdateKey(ctx context.Context, used bool, key KeyValue) error {
+func (s *KeyStore) UpdateKey(ctx context.Context, used bool, key string) error {
 	_, err := s.pool.Exec(ctx, "UPDATE keys SET used = $1 WHERE key_value = $2", used, key)
 	if err != nil {
 		return err

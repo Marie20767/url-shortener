@@ -4,22 +4,20 @@ import (
 	"context"
 	"time"
 
-	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type longUrl string
 
 type urlData struct {
-	key    keys.KeyValue `bson:"key_value"`
-	url    longUrl       `bson:"url"`
+	key    string `bson:"key_value"`
+	url    string       `bson:"url"`
 	expiry time.Time     `bson:"expiry"`
 }
 
-func (s *UrlStore) CreateShortUrl(ctx context.Context, url *urlData) error {
+func (s *UrlStore) InsertKey(ctx context.Context, key *urlData) error {
 	db := s.conn.Collection(s.collection)
-	_, err := db.InsertOne(ctx, url)
+	_, err := db.InsertOne(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -27,7 +25,7 @@ func (s *UrlStore) CreateShortUrl(ctx context.Context, url *urlData) error {
 	return nil
 }
 
-func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
+func (s *UrlStore) DeleteUrlData(ctx context.Context) ([]string, error) {
 	db := s.conn.Collection(s.collection)
 
 	filter := bson.M{
@@ -36,7 +34,7 @@ func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
 		},
 	}
 
-	var deletedKeys []keys.KeyValue
+	var deletedKeys []string
 
 	for {
 		var deleted urlData
@@ -53,7 +51,7 @@ func (s *UrlStore) DeleteUrls(ctx context.Context) ([]keys.KeyValue, error) {
 	return deletedKeys, nil
 }
 
-func (s *UrlStore) GetLongUrl(ctx context.Context, key keys.KeyValue) (longUrl, error) {
+func (s *UrlStore) GetUrl(ctx context.Context, key string) (string, error) {
 	var res urlData
 	db := s.conn.Collection(s.collection)
 	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
