@@ -5,7 +5,6 @@ import (
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
 
@@ -15,15 +14,32 @@ type UrlHandler struct {
 	ApiDomain string
 }
 
+type CreateShortUrlRequest struct {
+	urls.UrlData `bson:",inline"`
+	Key          struct{} `bson:"-" json:"-" validate:"-"`
+}
+
 func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
-	if err := godotenv.Load(); err != nil {
-		return err
+	var req CreateShortUrlRequest
+	if err := ctx.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 	}
 
-	key := "123xbcaa"
-	shortUrl := h.ApiDomain + key
+	if err := ctx.Validate(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
+	}
+
+	key, keyErr := h.KeyDb.GetUnusedKey(ctx.Request().Context())
+	if keyErr != nil {
+		return keyErr
+	}
+
+	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
+	if urlErr := h.UrlDb.InsertUrlData(ctx.Request().Context(), urlData); urlErr != nil {
+		return urlErr
+	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{
-		"url": shortUrl,
+		"url": h.ApiDomain + key,
 	})
 }
