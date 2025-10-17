@@ -6,29 +6,20 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type key struct {
-	key  string
-	used bool
-}
+func (s *KeyStore) GetUnusedKey(ctx context.Context) (string, error) {
+	var claimedKey string
+	query := `WITH key AS (SELECT key_value FROM keys WHERE used = false LIMIT 1)
+						UPDATE keys
+						SET used = true
+						FROM key
+						WHERE keys.key = key.key_value
+						RETURNING key.key_value`
 
-func (s *KeyStore) GetUnusedKeys(ctx context.Context) ([]*key, error) {
-	rows, err := s.pool.Query(ctx, "SELECT key_value, used FROM keys WHERE used = false")
-	if err != nil {
-		return nil, err
+	if err := s.pool.QueryRow(ctx, query).Scan(&claimedKey); err != nil {
+		return "", err
 	}
 
-	keys, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (*key, error) {
-		k := &key{}
-		if err := row.Scan(&k.key, &k.used); err != nil {
-			return nil, err
-		}
-		return k, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return keys, nil
+	return claimedKey, nil
 }
 
 func (s *KeyStore) InsertKeys(ctx context.Context, keys []string) (int, error) {
@@ -51,13 +42,4 @@ func (s *KeyStore) InsertKeys(ctx context.Context, keys []string) (int, error) {
 	}
 
 	return int(totalInserted), nil
-}
-
-func (s *KeyStore) UpdateKey(ctx context.Context, used bool, key string) error {
-	_, err := s.pool.Exec(ctx, "UPDATE keys SET used = $1 WHERE key_value = $2", used, key)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
