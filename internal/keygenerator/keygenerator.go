@@ -25,7 +25,7 @@ func New(keyDb *keys.KeyStore) *keygenstore {
 	}
 }
 
-func (s *keygenstore) GenerateKeys(ctx context.Context) error {
+func (s *keygenstore) Generate(ctx context.Context) error {
 	rowsInserted := 0
 
 	for rowsInserted < batchSize {
@@ -41,7 +41,7 @@ func (s *keygenstore) GenerateKeys(ctx context.Context) error {
 
 		keysWithoutDuplicates := set.New(keys...).ToSlice()
 
-		rows, err := s.keyDb.InsertKeys(ctx, keysWithoutDuplicates)
+		rows, err := s.keyDb.Insert(ctx, keysWithoutDuplicates)
 		if err != nil {
 			break
 		}

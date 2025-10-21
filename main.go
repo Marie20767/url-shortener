@@ -45,7 +45,7 @@ func run() error {
 	log.Println("connected to url db successfully!")
 
 	keyGen := keygenerator.New(keyDb)
-	keyGenErr := keyGen.GenerateKeys(ctx)
+	keyGenErr := keyGen.Generate(ctx)
 	if keyGenErr != nil {
 		return keyGenErr
 	}

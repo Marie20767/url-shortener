@@ -11,7 +11,7 @@ type key struct {
 	used bool
 }
 
-func (s *KeyStore) GetUnusedKeys(ctx context.Context) ([]*key, error) {
+func (s *KeyStore) GetUnused(ctx context.Context) ([]*key, error) {
 	rows, err := s.pool.Query(ctx, "SELECT key_value, used FROM keys WHERE used = false")
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (s *KeyStore) GetUnusedKeys(ctx context.Context) ([]*key, error) {
 	return keys, nil
 }
 
-func (s *KeyStore) InsertKeys(ctx context.Context, keys []string) (int, error) {
+func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
 	batch := &pgx.Batch{}
 
 	for _, key := range keys {
@@ -53,7 +53,7 @@ func (s *KeyStore) InsertKeys(ctx context.Context, keys []string) (int, error) {
 	return int(totalInserted), nil
 }
 
-func (s *KeyStore) UpdateKey(ctx context.Context, used bool, key string) error {
+func (s *KeyStore) Update(ctx context.Context, used bool, key string) error {
 	_, err := s.pool.Exec(ctx, "UPDATE keys SET used = $1 WHERE key_value = $2", used, key)
 	if err != nil {
 		return err

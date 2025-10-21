@@ -15,7 +15,7 @@ type UrlHandler struct {
 	ApiDomain string
 }
 
-func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
+func (h *UrlHandler) Create(ctx echo.Context) error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}

@@ -8,14 +8,13 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-
 type urlData struct {
-	key    string `bson:"key_value"`
-	url    string       `bson:"url"`
-	expiry time.Time     `bson:"expiry"`
+	key    string    `bson:"key_value"`
+	url    string    `bson:"url"`
+	expiry time.Time `bson:"expiry"`
 }
 
-func (s *UrlStore) InsertKey(ctx context.Context, key *urlData) error {
+func (s *UrlStore) Insert(ctx context.Context, key *urlData) error {
 	db := s.conn.Collection(s.collection)
 	_, err := db.InsertOne(ctx, key)
 	if err != nil {
@@ -25,7 +24,7 @@ func (s *UrlStore) InsertKey(ctx context.Context, key *urlData) error {
 	return nil
 }
 
-func (s *UrlStore) DeleteUrlData(ctx context.Context) ([]string, error) {
+func (s *UrlStore) Delete(ctx context.Context) ([]string, error) {
 	db := s.conn.Collection(s.collection)
 
 	filter := bson.M{
@@ -51,7 +50,7 @@ func (s *UrlStore) DeleteUrlData(ctx context.Context) ([]string, error) {
 	return deletedKeys, nil
 }
 
-func (s *UrlStore) GetUrl(ctx context.Context, key string) (string, error) {
+func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 	var res urlData
 	db := s.conn.Collection(s.collection)
 	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
