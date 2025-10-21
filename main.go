@@ -44,6 +44,7 @@ func run() error {
 	defer urlDb.Close(ctx)
 	log.Println("connected to url db successfully!")
 
+	// TODO: change to only generating keys in url request handler if no more keys available
 	keyGen := keygenerator.New(keyDb)
 	keyGenErr := keyGen.Generate(ctx)
 	if keyGenErr != nil {
