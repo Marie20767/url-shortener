@@ -19,7 +19,7 @@ type keygenstore struct {
 	keyDb *keys.KeyStore
 }
 
-func NewGenerator(keyDb *keys.KeyStore) *keygenstore {
+func New(keyDb *keys.KeyStore) *keygenstore {
 	return &keygenstore{
 		keyDb: keyDb,
 	}
@@ -39,7 +39,7 @@ func (s *keygenstore) GenerateKeys(ctx context.Context) error {
 			keys = append(keys, random)
 		}
 
-		keysWithoutDuplicates := set.NewSet(keys...).ToSlice()
+		keysWithoutDuplicates := set.New(keys...).ToSlice()
 
 		rows, err := s.keyDb.InsertKeys(ctx, keysWithoutDuplicates)
 		if err != nil {

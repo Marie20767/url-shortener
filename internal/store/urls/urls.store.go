@@ -9,7 +9,7 @@ import (
 )
 
 type UrlStore struct {
-	conn *mongo.Database
+	conn       *mongo.Database
 	collection string
 }
 
@@ -23,14 +23,14 @@ func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
 	return mongoClient.Database(dbName), nil
 }
 
-func NewStore(dbUrl, dbName string) (*UrlStore, error) {
+func New(dbUrl, dbName string) (*UrlStore, error) {
 	dbConn, err := connectDb(dbUrl, dbName)
 	if err != nil {
 		return nil, err
 	}
 
 	return &UrlStore{
-		conn: dbConn,
+		conn:       dbConn,
 		collection: "urls",
 	}, nil
 }

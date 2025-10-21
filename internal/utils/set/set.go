@@ -4,7 +4,7 @@ type Set[T comparable] struct {
 	Data map[T]struct{}
 }
 
-func NewSet[T comparable](elements ...T) *Set[T] {
+func New[T comparable](elements ...T) *Set[T] {
 	newSet := &Set[T]{
 		Data: make(map[T]struct{}),
 	}
