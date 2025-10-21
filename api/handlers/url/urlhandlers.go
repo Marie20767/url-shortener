@@ -33,13 +33,13 @@ func (h *UrlHandler) Create(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 	}
 
-	key, keyErr := h.KeyDb.GetUnusedKey(ctx.Request().Context())
+	key, keyErr := h.KeyDb.GetUnused(ctx.Request().Context())
 	if keyErr != nil {
 		return keyErr
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	if urlErr := h.UrlDb.InsertUrlData(ctx.Request().Context(), urlData); urlErr != nil {
+	if urlErr := h.UrlDb.Insert(ctx.Request().Context(), urlData); urlErr != nil {
 		return urlErr
 	}
 
