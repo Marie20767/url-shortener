@@ -11,7 +11,7 @@ type KeyStore struct {
 	pool *pgxpool.Pool
 }
 
-func NewStore(ctx context.Context, dbUrl string) (*KeyStore, error) {
+func New(ctx context.Context, dbUrl string) (*KeyStore, error) {
 	dbPool, err := pgxpool.New(ctx, dbUrl)
 	if err != nil {
 		return nil, err

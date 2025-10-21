@@ -6,5 +6,5 @@ import (
 )
 
 func RegisterAll(e *echo.Echo, urlHandler *urlhandlers.UrlHandler) {
-	e.POST("/create", urlHandler.CreateShortUrl)
+	e.POST("/create", urlHandler.Create)
 }
