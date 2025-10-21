@@ -39,11 +39,7 @@ func (s *keygenstore) GenerateKeys(ctx context.Context) error {
 			keys = append(keys, random)
 		}
 
-		var keysWithoutDuplicates []string
-
-		for key := range set.NewSet(keys...).Data {
-			keysWithoutDuplicates = append(keysWithoutDuplicates, key)
-		}
+		keysWithoutDuplicates := set.NewSet(keys...).ToSlice()
 
 		rows, err := s.keyDb.InsertKeys(ctx, keysWithoutDuplicates)
 		if err != nil {

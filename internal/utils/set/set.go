@@ -19,3 +19,13 @@ func (s *Set[T]) Add(elements ...T) {
 		s.Data[el] = struct{}{}
 	}
 }
+
+func (s *Set[T]) ToSlice() []T {
+	var slice []T
+
+	for key := range s.Data {
+		slice = append(slice, key)
+	}
+
+	return slice
+}
