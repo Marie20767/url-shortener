@@ -1,7 +1,9 @@
 package urlhandlers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
@@ -15,8 +17,8 @@ type UrlHandler struct {
 }
 
 type CreateShortUrlRequest struct {
-	urls.UrlData `bson:",inline"`
-	Key          struct{} `bson:"-" json:"-" validate:"-"`
+	Url    string     `json:"url" validate:"required,url"`
+	Expiry *time.Time `json:"expiry,omitempty" validate:"expiry"`
 }
 
 func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
@@ -25,7 +27,9 @@ func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 	}
 
+	// TODO: fix validation error
 	if err := ctx.Validate(&req); err != nil {
+		fmt.Println(">>> validation err: ", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 	}
 
