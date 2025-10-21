@@ -6,7 +6,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *KeyStore) GetUnusedKey(ctx context.Context) (string, error) {
+func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
 	var claimedKey string
 	query := `WITH key AS (SELECT key_value FROM keys WHERE used = false LIMIT 1)
 						UPDATE keys
@@ -22,7 +22,7 @@ func (s *KeyStore) GetUnusedKey(ctx context.Context) (string, error) {
 	return claimedKey, nil
 }
 
-func (s *KeyStore) InsertKeys(ctx context.Context, keys []string) (int, error) {
+func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
 	batch := &pgx.Batch{}
 
 	for _, key := range keys {
@@ -42,4 +42,13 @@ func (s *KeyStore) InsertKeys(ctx context.Context, keys []string) (int, error) {
 	}
 
 	return int(totalInserted), nil
+}
+
+func (s *KeyStore) Update(ctx context.Context, used bool, key string) error {
+	_, err := s.pool.Exec(ctx, "UPDATE keys SET used = $1 WHERE key_value = $2", used, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

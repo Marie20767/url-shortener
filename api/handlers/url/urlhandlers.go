@@ -21,7 +21,7 @@ type CreateShortUrlRequest struct {
 	Expiry *time.Time `json:"expiry,omitempty" validate:"expiry"`
 }
 
-func (h *UrlHandler) CreateShortUrl(ctx echo.Context) error {
+func (h *UrlHandler) Create(ctx echo.Context) error {
 	var req CreateShortUrlRequest
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")

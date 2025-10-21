@@ -19,13 +19,13 @@ type keygenstore struct {
 	keyDb *keys.KeyStore
 }
 
-func NewGenerator(keyDb *keys.KeyStore) *keygenstore {
+func New(keyDb *keys.KeyStore) *keygenstore {
 	return &keygenstore{
 		keyDb: keyDb,
 	}
 }
 
-func (s *keygenstore) GenerateKeys(ctx context.Context) error {
+func (s *keygenstore) Generate(ctx context.Context) error {
 	rowsInserted := 0
 
 	for rowsInserted < batchSize {
@@ -39,13 +39,9 @@ func (s *keygenstore) GenerateKeys(ctx context.Context) error {
 			keys = append(keys, random)
 		}
 
-		var keysWithoutDuplicates []string
+		keysWithoutDuplicates := set.New(keys...).ToSlice()
 
-		for key := range set.NewSet(keys...).Data {
-			keysWithoutDuplicates = append(keysWithoutDuplicates, key)
-		}
-
-		rows, err := s.keyDb.InsertKeys(ctx, keysWithoutDuplicates)
+		rows, err := s.keyDb.Insert(ctx, keysWithoutDuplicates)
 		if err != nil {
 			break
 		}

@@ -39,22 +39,23 @@ func run() error {
 		return err
 	}
 
-	keyDb, err := keys.NewStore(ctx, cfg.KeyDbUrl)
+	keyDb, err := keys.New(ctx, cfg.KeyDbUrl)
 	if err != nil {
 		return err
 	}
 	defer keyDb.Close()
 	log.Println("connected to key db successfully!")
 
-	urlDb, err := urls.NewStore(cfg.UrlDbUrl, cfg.UrlDbName)
+	urlDb, err := urls.New(cfg.UrlDbUrl, cfg.UrlDbName)
 	if err != nil {
 		return err
 	}
 	defer urlDb.Close(ctx)
 	log.Println("connected to url db successfully!")
 
-	keyGen := keygenerator.NewGenerator(keyDb)
-	keyGenErr := keyGen.GenerateKeys(ctx)
+	// TODO: change to only generating keys in url request handler if no more keys available
+	keyGen := keygenerator.New(keyDb)
+	keyGenErr := keyGen.Generate(ctx)
 	if keyGenErr != nil {
 		return keyGenErr
 	}

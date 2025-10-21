@@ -14,7 +14,7 @@ type UrlData struct {
 	Expiry *time.Time `bson:"expiry,omitempty" validate:"omitempty,expiry"`
 }
 
-func (s *UrlStore) InsertUrlData(ctx context.Context, urlData *UrlData) error {
+func (s *UrlStore) Insert(ctx context.Context, urlData *UrlData) error {
 	db := s.conn.Collection(s.collection)
 	_, err := db.InsertOne(ctx, urlData)
 	if err != nil {
@@ -24,7 +24,7 @@ func (s *UrlStore) InsertUrlData(ctx context.Context, urlData *UrlData) error {
 	return nil
 }
 
-func (s *UrlStore) DeleteUrlData(ctx context.Context) ([]string, error) {
+func (s *UrlStore) Delete(ctx context.Context) ([]string, error) {
 	db := s.conn.Collection(s.collection)
 
 	filter := bson.M{
@@ -50,7 +50,7 @@ func (s *UrlStore) DeleteUrlData(ctx context.Context) ([]string, error) {
 	return deletedKeys, nil
 }
 
-func (s *UrlStore) GetUrl(ctx context.Context, key string) (string, error) {
+func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 	var res UrlData
 	db := s.conn.Collection(s.collection)
 	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
