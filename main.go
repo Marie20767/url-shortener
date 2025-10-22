@@ -11,9 +11,18 @@ import (
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
+
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	_ "github.com/lib/pq"
 )
+
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i any) error {
+	return cv.validator.Struct(i)
+}
 
 func main() {
 	if err := run(); err != nil {
@@ -53,6 +62,7 @@ func run() error {
 	log.Println("generated url keys successfully!")
 
 	e := echo.New()
+	e.Validator = &CustomValidator{validator: validator.New()}
 	urlHandler := &urlhandlers.UrlHandler{KeyDb: keyDb, UrlDb: urlDb, ApiDomain: cfg.Domain}
 	routes.RegisterAll(e, urlHandler)
 	return e.Start(":" + cfg.Port)

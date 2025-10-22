@@ -1,11 +1,12 @@
 package urlhandlers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
 
@@ -15,15 +16,32 @@ type UrlHandler struct {
 	ApiDomain string
 }
 
+type CreateShortUrlRequest struct {
+	Url    string     `json:"url" validate:"required,url"`
+	Expiry *time.Time `json:"expiry,omitempty"`
+}
+
 func (h *UrlHandler) Create(ctx echo.Context) error {
-	if err := godotenv.Load(); err != nil {
-		return err
+	var req CreateShortUrlRequest
+	if err := ctx.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 	}
 
-	key := "123xbcaa"
-	shortUrl := h.ApiDomain + key
+	if err := ctx.Validate(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
+	}
+
+	key, keyErr := h.KeyDb.GetUnused(ctx.Request().Context())
+	if keyErr != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")
+	}
+
+	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
+	if urlErr := h.UrlDb.Insert(ctx.Request().Context(), urlData); urlErr != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
+	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{
-		"url": shortUrl,
+		"url": fmt.Sprintf("%s/%s", h.ApiDomain, key),
 	})
 }
