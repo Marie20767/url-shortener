@@ -61,7 +61,7 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 
 	longUrl, err := h.UrlDb.Get(ctx.Request().Context(), key)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get long url")
 	}
 
 	return ctx.Redirect(http.StatusMovedPermanently, longUrl)
