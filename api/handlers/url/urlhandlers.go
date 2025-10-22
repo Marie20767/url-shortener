@@ -18,7 +18,7 @@ type UrlHandler struct {
 
 type CreateShortUrlRequest struct {
 	Url    string     `json:"url" validate:"required,url"`
-	Expiry *time.Time `json:"expiry,omitempty" validate:"expiry"`
+	Expiry *time.Time `json:"expiry,omitempty"`
 }
 
 func (h *UrlHandler) Create(ctx echo.Context) error {
@@ -27,9 +27,7 @@ func (h *UrlHandler) Create(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 	}
 
-	// TODO: fix validation error
 	if err := ctx.Validate(&req); err != nil {
-		fmt.Println(">>> validation err: ", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 	}
 
@@ -44,6 +42,6 @@ func (h *UrlHandler) Create(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{
-		"url": h.ApiDomain + key,
+		"url": fmt.Sprintf("%s/%s", h.ApiDomain, key),
 	})
 }

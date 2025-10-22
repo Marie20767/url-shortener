@@ -12,7 +12,7 @@ func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
 						UPDATE keys
 						SET used = true
 						FROM key
-						WHERE keys.key = key.key_value
+						WHERE keys.key_value = key.key_value
 						RETURNING key.key_value`
 
 	if err := s.pool.QueryRow(ctx, query).Scan(&claimedKey); err != nil {
