@@ -38,12 +38,12 @@ func (h *UrlHandler) CreateShort(ctx echo.Context) error {
 
 	key, keyErr := h.KeyDb.GetUnused(ctx.Request().Context())
 	if keyErr != nil {
-		return keyErr
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
 	if urlErr := h.UrlDb.Insert(ctx.Request().Context(), urlData); urlErr != nil {
-		return urlErr
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{
