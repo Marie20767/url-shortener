@@ -9,9 +9,9 @@ import (
 )
 
 type UrlData struct {
-	Key    string    `bson:"key_value"`
-	Url    string    `bson:"url" validate:"required,url"`
-	Expiry *time.Time `bson:"expiry,omitempty" validate:"omitempty,expiry"`
+	Key    string     `bson:"key_value"`
+	Url    string     `bson:"url"`
+	Expiry *time.Time `bson:"expiry,omitempty"`
 }
 
 func (s *UrlStore) Insert(ctx context.Context, urlData *UrlData) error {
