@@ -2,12 +2,23 @@ package keys
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
 	var claimedKey string
+
+	if len(s.cache) > 0 {
+		claimedKey = s.cache[0]
+
+		if err := s.pool.QueryRow(ctx, "UPDATE keys SET used = true WHERE keys.key_value = $1", claimedKey); err != nil {
+			return "", nil
+		}
+
+		s.cache = s.cache[1:]
+
+		return claimedKey, nil
+	}
+
 	query := `WITH key AS (SELECT key_value FROM keys WHERE used = false LIMIT 1)
 						UPDATE keys
 						SET used = true
@@ -23,25 +34,26 @@ func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
 }
 
 func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
-	batch := &pgx.Batch{}
-
-	for _, key := range keys {
-		batch.Queue("INSERT INTO keys (key_value) VALUES ($1) ON CONFLICT DO NOTHING", key)
+	query := "INSERT INTO keys (key_value) SELECT UNNEST($1::varchar(8)[]) ON CONFLICT DO NOTHING RETURNING key_value"
+	rows, err := s.pool.Query(ctx, query, keys)
+	if err != nil {
+		return 0, err
 	}
+	defer rows.Close()
 
-	results := s.pool.SendBatch(ctx, batch)
-	defer results.Close()
-
-	var totalInserted int64
-	for range keys {
-		cmdTag, err := results.Exec()
-		if err != nil {
+	var inserted []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
 			return 0, err
 		}
-		totalInserted += cmdTag.RowsAffected()
+
+		inserted = append(inserted, key)
 	}
 
-	return int(totalInserted), nil
+	s.cache = append(s.cache, inserted...)
+
+	return len(inserted), nil
 }
 
 func (s *KeyStore) Update(ctx context.Context, used bool, key string) error {

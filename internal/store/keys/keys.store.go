@@ -8,7 +8,8 @@ import (
 )
 
 type KeyStore struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	cache []string
 }
 
 func New(ctx context.Context, dbUrl string) (*KeyStore, error) {
