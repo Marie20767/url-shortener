@@ -12,8 +12,8 @@ import (
 )
 
 type UrlHandler struct {
-	UrlDb     *urls.UrlStore
-	KeyDb     *keys.KeyStore
+	UrlStore  *urls.UrlStore
+	KeyStore  *keys.KeyStore
 	ApiDomain string
 }
 
@@ -36,13 +36,13 @@ func (h *UrlHandler) CreateShort(ctx echo.Context) error {
 		return validationErr()
 	}
 
-	key, keyErr := h.KeyDb.GetUnused(ctx.Request().Context())
+	key, keyErr := h.KeyStore.GetUnused(ctx.Request().Context())
 	if keyErr != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	if urlErr := h.UrlDb.Insert(ctx.Request().Context(), urlData); urlErr != nil {
+	if urlErr := h.UrlStore.Insert(ctx.Request().Context(), urlData); urlErr != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
 	}
 
@@ -59,7 +59,7 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlDb.Get(ctx.Request().Context(), key)
+	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), key)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get long url")
 	}

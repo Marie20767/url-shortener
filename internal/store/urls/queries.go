@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -51,11 +52,20 @@ func (s *UrlStore) Delete(ctx context.Context) ([]string, error) {
 }
 
 func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
+	url, err := s.cache.Get(key)
+	if err == nil {
+		return url, nil
+	}
+
 	var res UrlData
 	db := s.conn.Collection(s.collection)
-	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
+	err = db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
 	if err != nil {
 		return "", err
+	}
+	err = s.cache.Add(key, res.Url)
+	if err != nil {
+		log.Error("Failed to add url to cache", err)
 	}
 
 	return res.Url, nil
