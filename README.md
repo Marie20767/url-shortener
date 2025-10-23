@@ -2,6 +2,8 @@
 
 - PostgreSQL, MongoDB and Redis for storage.
 
+![high-level system architecture](apparchitecture.png)
+
 ## Running the app
 
 - Start the app:

@@ -2,19 +2,27 @@ package keys
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5"
 )
 
-func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
+func (s *KeyStore) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+
+	return tx, err
+}
+
+func (s *KeyStore) GetUnused(ctx context.Context, tx pgx.Tx) (string, error) {
 	var claimedKey string
 
 	if len(s.cache) > 0 {
-		claimedKey = s.cache[0]
+    s.mu.Lock()
+		claimedKey, s.cache = s.cache[0], s.cache[1:]
+		s.mu.Unlock()
 
-		if err := s.pool.QueryRow(ctx, "UPDATE keys SET used = true WHERE keys.key_value = $1", claimedKey); err != nil {
+		if err := tx.QueryRow(ctx, "UPDATE keys SET used = true WHERE keys.key_value = $1", claimedKey); err != nil {
 			return "", nil
 		}
-
-		s.cache = s.cache[1:]
 
 		return claimedKey, nil
 	}
@@ -26,7 +34,7 @@ func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
 						WHERE keys.key_value = key.key_value
 						RETURNING key.key_value`
 
-	if err := s.pool.QueryRow(ctx, query).Scan(&claimedKey); err != nil {
+	if err := tx.QueryRow(ctx, query).Scan(&claimedKey); err != nil {
 		return "", err
 	}
 

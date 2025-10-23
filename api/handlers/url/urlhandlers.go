@@ -26,27 +26,38 @@ type KeyParam struct {
 	Key string `param:"key" validate:"required,alphanum,len=8"`
 }
 
-func (h *UrlHandler) CreateShort(ctx echo.Context) error {
+func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
+	ctx := echoCtx.Request().Context()
+
 	var req UrlData
-	if err := ctx.Bind(&req); err != nil {
+	if err := echoCtx.Bind(&req); err != nil {
 		return validationErr()
 	}
 
-	if err := ctx.Validate(&req); err != nil {
+	if err := echoCtx.Validate(&req); err != nil {
 		return validationErr()
 	}
 
-	key, keyErr := h.KeyStore.GetUnused(ctx.Request().Context())
+	tx, err := h.KeyStore.BeginTransaction(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to start transaction")
+	}
+	defer tx.Rollback(ctx)
+	key, keyErr := h.KeyStore.GetUnused(ctx, tx)
 	if keyErr != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	if urlErr := h.UrlStore.Insert(ctx.Request().Context(), urlData); urlErr != nil {
+	if urlErr := h.UrlStore.Insert(ctx, urlData); urlErr != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
 	}
 
-	return ctx.JSON(http.StatusOK, map[string]string{
+	if err := tx.Commit(ctx); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to commit transaction")
+	}
+
+	return echoCtx.JSON(http.StatusOK, map[string]string{
 		"url": fmt.Sprintf("%s/%s", h.ApiDomain, key),
 	})
 }
