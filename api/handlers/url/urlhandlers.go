@@ -3,6 +3,7 @@ package urlhandlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
@@ -16,19 +17,23 @@ type UrlHandler struct {
 	ApiDomain string
 }
 
-type CreateShortUrlRequest struct {
+type UrlData struct {
 	Url    string     `json:"url" validate:"required,url"`
 	Expiry *time.Time `json:"expiry,omitempty"`
 }
 
-func (h *UrlHandler) Create(ctx echo.Context) error {
-	var req CreateShortUrlRequest
+type KeyParam struct {
+	Key string `param:"key" validate:"required,alphanum,len=8"`
+}
+
+func (h *UrlHandler) CreateShort(ctx echo.Context) error {
+	var req UrlData
 	if err := ctx.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
+		return validationErr()
 	}
 
 	if err := ctx.Validate(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
+		return validationErr()
 	}
 
 	key, keyErr := h.KeyDb.GetUnused(ctx.Request().Context())
@@ -44,4 +49,26 @@ func (h *UrlHandler) Create(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, map[string]string{
 		"url": fmt.Sprintf("%s/%s", h.ApiDomain, key),
 	})
+}
+
+func (h *UrlHandler) GetLong(ctx echo.Context) error {
+	var param KeyParam
+	if err := ctx.Bind(&param); err != nil {
+		return err
+	}
+
+	if err := ctx.Validate(&param); err != nil {
+		return validationErr()
+	}
+
+	longUrl, err := h.UrlDb.Get(ctx.Request().Context(), strings.ToLower(param.Key))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get long url")
+	}
+
+	return ctx.Redirect(http.StatusMovedPermanently, longUrl)
+}
+
+func validationErr() error {
+	return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
 }
