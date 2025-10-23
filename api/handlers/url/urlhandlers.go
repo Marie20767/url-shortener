@@ -52,14 +52,16 @@ func (h *UrlHandler) CreateShort(ctx echo.Context) error {
 }
 
 func (h *UrlHandler) GetLong(ctx echo.Context) error {
-	key := strings.ToLower(ctx.Param("key"))
-	param := KeyParam{Key: key}
+	var param KeyParam
+	if err := ctx.Bind(&param); err != nil {
+		return err
+	}
 
 	if err := ctx.Validate(&param); err != nil {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), key)
+	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get long url")
 	}
