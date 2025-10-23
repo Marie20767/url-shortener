@@ -49,11 +49,13 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	if err := h.UrlStore.Insert(ctx, urlData); err != nil {
+	id, err := h.UrlStore.Insert(ctx, urlData)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
 	}
 
 	if err := tx.Commit(ctx); err != nil {
+		h.UrlStore.DeleteById(ctx, id)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to commit transaction")
 	}
 
