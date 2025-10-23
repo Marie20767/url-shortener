@@ -43,13 +43,13 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to start transaction")
 	}
 	defer tx.Rollback(ctx)
-	key, keyErr := h.KeyStore.GetUnused(ctx, tx)
-	if keyErr != nil {
+	key, err := h.KeyStore.GetUnused(ctx, tx)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	if urlErr := h.UrlStore.Insert(ctx, urlData); urlErr != nil {
+	if err := h.UrlStore.Insert(ctx, urlData); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
 	}
 

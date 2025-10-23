@@ -16,12 +16,13 @@ func (s *KeyStore) GetUnused(ctx context.Context, tx pgx.Tx) (string, error) {
 	var claimedKey string
 
 	if len(s.cache) > 0 {
-    s.mu.Lock()
+		s.mu.Lock()
 		claimedKey, s.cache = s.cache[0], s.cache[1:]
 		s.mu.Unlock()
 
-		if err := tx.QueryRow(ctx, "UPDATE keys SET used = true WHERE keys.key_value = $1", claimedKey); err != nil {
-			return "", nil
+		_, err := tx.Exec(ctx, "UPDATE keys SET used = true WHERE key_value = $1", claimedKey)
+		if err != nil {
+			return "", err
 		}
 
 		return claimedKey, nil
