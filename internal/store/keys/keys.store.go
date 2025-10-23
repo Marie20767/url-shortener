@@ -3,12 +3,15 @@ package keys
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type KeyStore struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	cache []string
+	mu    sync.Mutex
 }
 
 func New(ctx context.Context, dbUrl string) (*KeyStore, error) {
@@ -21,8 +24,11 @@ func New(ctx context.Context, dbUrl string) (*KeyStore, error) {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
 	}
 
+	var cache []string
+
 	return &KeyStore{
-		pool: dbPool,
+		pool:  dbPool,
+		cache: cache,
 	}, nil
 }
 

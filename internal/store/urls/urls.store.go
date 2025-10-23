@@ -4,13 +4,19 @@ import (
 	"context"
 	"time"
 
+	"github.com/Marie20767/url-shortener/internal/utils/cache/lru"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+)
+
+const (
+	cacheCapacity = 2
 )
 
 type UrlStore struct {
 	conn       *mongo.Database
 	collection string
+	cache      *cache.LRUCache
 }
 
 func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
@@ -29,9 +35,15 @@ func New(dbUrl, dbName string) (*UrlStore, error) {
 		return nil, err
 	}
 
+	lru, err := cache.New(cacheCapacity)
+	if err != nil {
+		return nil, err
+	}
+
 	return &UrlStore{
 		conn:       dbConn,
 		collection: "urls",
+		cache:      lru,
 	}, nil
 }
 

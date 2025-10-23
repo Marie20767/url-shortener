@@ -16,12 +16,12 @@ const (
 )
 
 type keygenstore struct {
-	keyDb *keys.KeyStore
+	keyStore *keys.KeyStore
 }
 
-func New(keyDb *keys.KeyStore) *keygenstore {
+func New(keyStore *keys.KeyStore) *keygenstore {
 	return &keygenstore{
-		keyDb: keyDb,
+		keyStore: keyStore,
 	}
 }
 
@@ -41,7 +41,7 @@ func (s *keygenstore) Generate(ctx context.Context) error {
 
 		keysWithoutDuplicates := set.New(keys...).ToSlice()
 
-		rows, err := s.keyDb.Insert(ctx, keysWithoutDuplicates)
+		rows, err := s.keyStore.Insert(ctx, keysWithoutDuplicates)
 		if err != nil {
 			break
 		}
