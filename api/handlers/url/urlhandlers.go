@@ -55,7 +55,7 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		h.UrlStore.DeleteById(ctx, id)
+		_ = h.UrlStore.DeleteById(ctx, id)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to commit transaction")
 	}
 
