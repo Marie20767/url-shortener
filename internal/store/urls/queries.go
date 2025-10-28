@@ -72,8 +72,8 @@ func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = s.cache.Add(key, res.Url)
-	if err != nil {
+	ok = s.cache.Add(key, res.Url)
+	if !ok {
 		log.Error("Failed to add url to cache", err)
 	}
 

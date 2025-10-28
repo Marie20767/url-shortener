@@ -5,7 +5,6 @@ import (
 )
 
 var (
-	ErrCacheEntryAlreadyExists = errors.New("entry with this key already exists in cache")
 	ErrCacheCapacity           = errors.New("cache can't have 0 capacity")
 )
 
@@ -39,9 +38,9 @@ func (c *LRUCache) Get(key string) (string, bool) {
 	return "", false
 }
 
-func (c *LRUCache) Add(key string, value string) error {
+func (c *LRUCache) Add(key string, value string) bool {
 	if _, exists := c.itemsMap[key]; exists {
-		return ErrCacheEntryAlreadyExists
+		return false
 	}
 
 	if len(c.keys) == c.capacity {
@@ -51,5 +50,5 @@ func (c *LRUCache) Add(key string, value string) error {
 	c.keys = append(c.keys, key)
 	c.itemsMap[key] = value
 
-	return nil
+	return true
 }
