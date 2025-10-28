@@ -39,14 +39,14 @@ func run() error {
 		return err
 	}
 
-	keyStore, err := keys.New(ctx, cfg.KeyDbUrl)
+	keyStore, err := keys.New(ctx, cfg.Key)
 	if err != nil {
 		return err
 	}
 	defer keyStore.Close()
 	log.Println("connected to key db successfully!")
 
-	urlStore, err := urls.New(cfg.UrlDbUrl, cfg.UrlDbName)
+	urlStore, err := urls.New(cfg.Url)
 	if err != nil {
 		return err
 	}

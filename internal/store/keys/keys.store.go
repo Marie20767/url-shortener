@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Marie20767/url-shortener/internal/utils/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,8 +15,8 @@ type KeyStore struct {
 	mu    sync.Mutex
 }
 
-func New(ctx context.Context, dbUrl string) (*KeyStore, error) {
-	dbPool, err := pgxpool.New(ctx, dbUrl)
+func New(ctx context.Context, cfg *config.Key) (*KeyStore, error) {
+	dbPool, err := pgxpool.New(ctx, cfg.DbUrl)
 	if err != nil {
 		return nil, err
 	}

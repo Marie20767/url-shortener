@@ -61,14 +61,14 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 }
 
 func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
-	url, err := s.cache.Get(key)
-	if err == nil {
+	url, ok := s.cache.Get(key)
+	if ok {
 		return url, nil
 	}
 
 	var res UrlData
 	db := s.conn.Collection(s.collection)
-	err = db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
+	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
 	if err != nil {
 		return "", err
 	}

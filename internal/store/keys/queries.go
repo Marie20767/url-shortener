@@ -43,6 +43,7 @@ func (s *KeyStore) GetUnused(ctx context.Context, tx pgx.Tx) (string, error) {
 }
 
 func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
+	// do nothing on conflict because we just want to ignore any duplicate keys
 	query := "INSERT INTO keys (key_value) SELECT UNNEST($1::varchar(8)[]) ON CONFLICT DO NOTHING RETURNING key_value"
 	rows, err := s.pool.Query(ctx, query, keys)
 	if err != nil {
