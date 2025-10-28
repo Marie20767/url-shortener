@@ -12,8 +12,8 @@ import (
 )
 
 type UrlHandler struct {
-	UrlDb     *urls.UrlStore
-	KeyDb     *keys.KeyStore
+	UrlStore  *urls.UrlStore
+	KeyStore  *keys.KeyStore
 	ApiDomain string
 }
 
@@ -26,27 +26,40 @@ type KeyParam struct {
 	Key string `param:"key" validate:"required,alphanum,len=8"`
 }
 
-func (h *UrlHandler) CreateShort(ctx echo.Context) error {
+func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
+	ctx := echoCtx.Request().Context()
+
 	var req UrlData
-	if err := ctx.Bind(&req); err != nil {
+	if err := echoCtx.Bind(&req); err != nil {
 		return validationErr()
 	}
 
-	if err := ctx.Validate(&req); err != nil {
+	if err := echoCtx.Validate(&req); err != nil {
 		return validationErr()
 	}
 
-	key, keyErr := h.KeyDb.GetUnused(ctx.Request().Context())
-	if keyErr != nil {
+	tx, err := h.KeyStore.BeginTransaction(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to start transaction")
+	}
+	defer tx.Rollback(ctx)
+	key, err := h.KeyStore.GetUnused(ctx, tx)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	if urlErr := h.UrlDb.Insert(ctx.Request().Context(), urlData); urlErr != nil {
+	id, err := h.UrlStore.Insert(ctx, urlData)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
 	}
 
-	return ctx.JSON(http.StatusOK, map[string]string{
+	if err := tx.Commit(ctx); err != nil {
+		_ = h.UrlStore.DeleteById(ctx, id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to commit transaction")
+	}
+
+	return echoCtx.JSON(http.StatusOK, map[string]string{
 		"url": fmt.Sprintf("%s/%s", h.ApiDomain, key),
 	})
 }
@@ -61,7 +74,7 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlDb.Get(ctx.Request().Context(), strings.ToLower(param.Key))
+	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get long url")
 	}

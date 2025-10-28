@@ -6,8 +6,28 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
+func (s *KeyStore) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+
+	return tx, err
+}
+
+func (s *KeyStore) GetUnused(ctx context.Context, tx pgx.Tx) (string, error) {
 	var claimedKey string
+
+	if len(s.cache) > 0 {
+		s.mu.Lock()
+		claimedKey, s.cache = s.cache[0], s.cache[1:]
+		s.mu.Unlock()
+
+		_, err := tx.Exec(ctx, "UPDATE keys SET used = true WHERE key_value = $1", claimedKey)
+		if err != nil {
+			return "", err
+		}
+
+		return claimedKey, nil
+	}
+
 	query := `WITH key AS (SELECT key_value FROM keys WHERE used = false LIMIT 1)
 						UPDATE keys
 						SET used = true
@@ -15,7 +35,7 @@ func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
 						WHERE keys.key_value = key.key_value
 						RETURNING key.key_value`
 
-	if err := s.pool.QueryRow(ctx, query).Scan(&claimedKey); err != nil {
+	if err := tx.QueryRow(ctx, query).Scan(&claimedKey); err != nil {
 		return "", err
 	}
 
@@ -23,25 +43,27 @@ func (s *KeyStore) GetUnused(ctx context.Context) (string, error) {
 }
 
 func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
-	batch := &pgx.Batch{}
-
-	for _, key := range keys {
-		batch.Queue("INSERT INTO keys (key_value) VALUES ($1) ON CONFLICT DO NOTHING", key)
+	// do nothing on conflict because we just want to ignore any duplicate keys
+	query := "INSERT INTO keys (key_value) SELECT UNNEST($1::varchar(8)[]) ON CONFLICT DO NOTHING RETURNING key_value"
+	rows, err := s.pool.Query(ctx, query, keys)
+	if err != nil {
+		return 0, err
 	}
+	defer rows.Close()
 
-	results := s.pool.SendBatch(ctx, batch)
-	defer results.Close()
-
-	var totalInserted int64
-	for range keys {
-		cmdTag, err := results.Exec()
-		if err != nil {
+	var inserted []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
 			return 0, err
 		}
-		totalInserted += cmdTag.RowsAffected()
+
+		inserted = append(inserted, key)
 	}
 
-	return int(totalInserted), nil
+	s.cache = append(s.cache, inserted...)
+
+	return len(inserted), nil
 }
 
 func (s *KeyStore) Update(ctx context.Context, used bool, key string) error {

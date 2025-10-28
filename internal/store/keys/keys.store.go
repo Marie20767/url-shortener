@@ -3,16 +3,20 @@ package keys
 import (
 	"context"
 	"fmt"
+	"sync"
 
+	"github.com/Marie20767/url-shortener/internal/utils/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type KeyStore struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	cache []string
+	mu    sync.Mutex
 }
 
-func New(ctx context.Context, dbUrl string) (*KeyStore, error) {
-	dbPool, err := pgxpool.New(ctx, dbUrl)
+func New(ctx context.Context, cfg *config.Key) (*KeyStore, error) {
+	dbPool, err := pgxpool.New(ctx, cfg.DbUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -21,8 +25,11 @@ func New(ctx context.Context, dbUrl string) (*KeyStore, error) {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
 	}
 
+	var cache []string
+
 	return &KeyStore{
-		pool: dbPool,
+		pool:  dbPool,
+		cache: cache,
 	}, nil
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/Marie20767/url-shortener/internal/utils/cache"
+	"github.com/Marie20767/url-shortener/internal/utils/config"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -11,6 +13,7 @@ import (
 type UrlStore struct {
 	conn       *mongo.Database
 	collection string
+	cache      *cache.LRUCache
 }
 
 func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
@@ -23,8 +26,13 @@ func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
 	return mongoClient.Database(dbName), nil
 }
 
-func New(dbUrl, dbName string) (*UrlStore, error) {
-	dbConn, err := connectDb(dbUrl, dbName)
+func New(cfg *config.Url) (*UrlStore, error) {
+	dbConn, err := connectDb(cfg.DbUrl, cfg.DbName)
+	if err != nil {
+		return nil, err
+	}
+
+	cache, err := cache.New(cfg.CacheCapacity)
 	if err != nil {
 		return nil, err
 	}
@@ -32,6 +40,7 @@ func New(dbUrl, dbName string) (*UrlStore, error) {
 	return &UrlStore{
 		conn:       dbConn,
 		collection: "urls",
+		cache:      cache,
 	}, nil
 }
 

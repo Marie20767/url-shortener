@@ -39,22 +39,22 @@ func run() error {
 		return err
 	}
 
-	keyDb, err := keys.New(ctx, cfg.KeyDbUrl)
+	keyStore, err := keys.New(ctx, cfg.Key)
 	if err != nil {
 		return err
 	}
-	defer keyDb.Close()
+	defer keyStore.Close()
 	log.Println("connected to key db successfully!")
 
-	urlDb, err := urls.New(cfg.UrlDbUrl, cfg.UrlDbName)
+	urlStore, err := urls.New(cfg.Url)
 	if err != nil {
 		return err
 	}
-	defer urlDb.Close(ctx)
+	defer urlStore.Close(ctx)
 	log.Println("connected to url db successfully!")
 
 	// TODO: change to only generating keys in url request handler if no more keys available
-	keyGen := keygenerator.New(keyDb)
+	keyGen := keygenerator.New(keyStore)
 	keyGenErr := keyGen.Generate(ctx)
 	if keyGenErr != nil {
 		return keyGenErr
@@ -63,7 +63,11 @@ func run() error {
 
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
-	urlHandler := &urlhandlers.UrlHandler{KeyDb: keyDb, UrlDb: urlDb, ApiDomain: cfg.Domain}
+	urlHandler := &urlhandlers.UrlHandler{
+		KeyStore:  keyStore,
+		UrlStore:  urlStore,
+		ApiDomain: cfg.Domain,
+	}
 	routes.RegisterAll(e, urlHandler)
 	return e.Start(":" + cfg.Port)
 }

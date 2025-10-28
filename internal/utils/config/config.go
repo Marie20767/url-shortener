@@ -3,16 +3,26 @@ package config
 import (
 	"errors"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
+type Url struct {
+	DbUrl         string
+	DbName        string
+	CacheCapacity int
+}
+
+type Key struct {
+	DbUrl string
+}
+
 type cfg struct {
-	Port      string
-	Domain    string
-	KeyDbUrl  string
-	UrlDbUrl  string
-	UrlDbName string
+	Port   string
+	Domain string
+	Key    *Key
+	Url    *Url
 }
 
 func ParseEnv() (*cfg, error) {
@@ -21,11 +31,12 @@ func ParseEnv() (*cfg, error) {
 	}
 
 	envVars := map[string]*string{
-		"KEY_DB_URL":  nil,
-		"URL_DB_URL":  nil,
-		"URL_DB_NAME": nil,
-		"PORT":        nil,
-		"API_DOMAIN":  nil,
+		"KEY_DB_URL":         nil,
+		"URL_DB_URL":         nil,
+		"URL_DB_NAME":        nil,
+		"URL_CACHE_CAPACITY": nil,
+		"PORT":               nil,
+		"API_DOMAIN":         nil,
 	}
 
 	for key := range envVars {
@@ -36,12 +47,25 @@ func ParseEnv() (*cfg, error) {
 		envVars[key] = &value
 	}
 
+	Key := &Key{
+		DbUrl: *envVars["KEY_DB_URL"],
+	}
+
+	urlCacheCapacity, err := strconv.Atoi(*envVars["URL_CACHE_CAPACITY"])
+	if err != nil {
+		return nil, err
+	}
+	Url := &Url{
+		DbUrl:         *envVars["URL_DB_URL"],
+		DbName:        *envVars["URL_DB_NAME"],
+		CacheCapacity: urlCacheCapacity,
+	}
+
 	cfg := &cfg{
-		KeyDbUrl:  *envVars["KEY_DB_URL"],
-		UrlDbUrl:  *envVars["URL_DB_URL"],
-		UrlDbName: *envVars["URL_DB_NAME"],
-		Port:      *envVars["PORT"],
-		Domain:    *envVars["API_DOMAIN"],
+		Key:    Key,
+		Url:    Url,
+		Port:   *envVars["PORT"],
+		Domain: *envVars["API_DOMAIN"],
 	}
 
 	return cfg, nil
