@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Marie20767/url-shortener/api/handlers/url"
+	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
 	"github.com/Marie20767/url-shortener/api/routes"
 	"github.com/Marie20767/url-shortener/internal/keygenerator"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
@@ -50,7 +50,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	defer urlStore.Close(ctx)
+	defer urlStore.Close(ctx) //nolint:errcheck
 	log.Println("connected to url db successfully!")
 
 	// TODO: change to only generating keys in url request handler if no more keys available

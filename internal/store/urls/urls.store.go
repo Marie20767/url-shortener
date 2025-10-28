@@ -16,23 +16,24 @@ type UrlStore struct {
 	cache      *cache.LRUCache
 }
 
-func connectDb(dbUrl, dbName string) (*mongo.Database, error) {
-	clientOpts := options.Client().ApplyURI(dbUrl).SetConnectTimeout(5 * time.Second)
+func connectDb(cfg *config.Url) (*mongo.Database, error) {
+	timeOut := time.Duration(cfg.DbTimeout) * time.Second
+	clientOpts := options.Client().ApplyURI(cfg.DbUrl).SetConnectTimeout(timeOut)
 	mongoClient, err := mongo.Connect(clientOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	return mongoClient.Database(dbName), nil
+	return mongoClient.Database(cfg.DbName), nil
 }
 
 func New(cfg *config.Url) (*UrlStore, error) {
-	dbConn, err := connectDb(cfg.DbUrl, cfg.DbName)
+	dbConn, err := connectDb(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	cache, err := cache.New(cfg.CacheCapacity)
+	newCache, err := cache.New(cfg.CacheCapacity)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,7 @@ func New(cfg *config.Url) (*UrlStore, error) {
 	return &UrlStore{
 		conn:       dbConn,
 		collection: "urls",
-		cache:      cache,
+		cache:      newCache,
 	}, nil
 }
 

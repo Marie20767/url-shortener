@@ -29,17 +29,17 @@ func (s *keygenstore) Generate(ctx context.Context) error {
 	rowsInserted := 0
 
 	for rowsInserted < batchSize {
-		keys := make([]string, 0, batchSize)
+		newKeys := make([]string, 0, batchSize)
 
 		for range batchSize {
 			random, err := randomString(keyLength)
 			if err != nil {
 				return errors.New("failed to create url keys")
 			}
-			keys = append(keys, random)
+			newKeys = append(newKeys, random)
 		}
 
-		keysWithoutDuplicates := set.New(keys...).ToSlice()
+		keysWithoutDuplicates := set.New(newKeys...).ToSlice()
 
 		rows, err := s.keyStore.Insert(ctx, keysWithoutDuplicates)
 		if err != nil {

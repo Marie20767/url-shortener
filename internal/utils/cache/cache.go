@@ -4,13 +4,11 @@ import (
 	"errors"
 )
 
-var (
-	ErrCacheCapacity           = errors.New("cache can't have 0 capacity")
-)
+var ErrCacheCapacity = errors.New("cache can't have 0 capacity")
 
 type LRUCache struct {
 	capacity int
-	keys []string
+	keys     []string
 	itemsMap map[string]string
 }
 
@@ -38,7 +36,7 @@ func (c *LRUCache) Get(key string) (string, bool) {
 	return "", false
 }
 
-func (c *LRUCache) Add(key string, value string) bool {
+func (c *LRUCache) Add(key, value string) bool {
 	if _, exists := c.itemsMap[key]; exists {
 		return false
 	}
