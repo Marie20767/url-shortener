@@ -1,9 +1,9 @@
 package routes
 
 import (
-	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
-
 	"github.com/labstack/echo/v4"
+
+	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
 )
 
 func RegisterAll(e *echo.Echo, urlHandler *urlhandlers.UrlHandler) {

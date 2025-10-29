@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Marie20767/url-shortener/internal/utils/config"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
 type KeyStore struct {
