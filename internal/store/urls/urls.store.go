@@ -13,7 +13,7 @@ import (
 type UrlStore struct {
 	conn       *mongo.Database
 	collection string
-	cache      *cache.LRUCache
+	cache      *cache.Cache
 }
 
 func connectDb(cfg *config.Url) (*mongo.Database, error) {
@@ -33,7 +33,7 @@ func New(cfg *config.Url) (*UrlStore, error) {
 		return nil, err
 	}
 
-	newCache, err := cache.New(cfg.CacheCapacity)
+	newCache, err := cache.New(cfg.CacheUrl)
 	if err != nil {
 		return nil, err
 	}

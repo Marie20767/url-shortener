@@ -9,10 +9,10 @@ import (
 )
 
 type Url struct {
-	DbUrl         string
-	DbName        string
-	DbTimeout     int
-	CacheCapacity int
+	DbUrl     string
+	DbName    string
+	DbTimeout int
+	CacheUrl  string
 }
 
 type Key struct {
@@ -32,13 +32,13 @@ func ParseEnv() (*cfg, error) {
 	}
 
 	envVars := map[string]*string{
-		"KEY_DB_URL":         nil,
-		"URL_DB_URL":         nil,
-		"URL_DB_NAME":        nil,
-		"URL_DB_TIMEOUT":     nil,
-		"URL_CACHE_CAPACITY": nil,
-		"PORT":               nil,
-		"API_DOMAIN":         nil,
+		"KEY_DB_URL":     nil,
+		"URL_DB_URL":     nil,
+		"URL_DB_NAME":    nil,
+		"URL_DB_TIMEOUT": nil,
+		"URL_CACHE_URL":  nil,
+		"PORT":           nil,
+		"API_DOMAIN":     nil,
 	}
 
 	for key := range envVars {
@@ -57,15 +57,11 @@ func ParseEnv() (*cfg, error) {
 	if err != nil {
 		return nil, err
 	}
-	urlCacheCapacity, err := strconv.Atoi(*envVars["URL_CACHE_CAPACITY"])
-	if err != nil {
-		return nil, err
-	}
 	Url := &Url{
-		DbUrl:         *envVars["URL_DB_URL"],
-		DbName:        *envVars["URL_DB_NAME"],
-		DbTimeout:     urlDbTimeout,
-		CacheCapacity: urlCacheCapacity,
+		DbUrl:     *envVars["URL_DB_URL"],
+		DbName:    *envVars["URL_DB_NAME"],
+		DbTimeout: urlDbTimeout,
+		CacheUrl:  *envVars["URL_CACHE_URL"],
 	}
 
 	cfg := &cfg{

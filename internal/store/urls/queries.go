@@ -61,7 +61,7 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 }
 
 func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
-	url, ok := s.cache.Get(key)
+	url, ok := s.cache.Get(ctx, key)
 	if ok {
 		return url, nil
 	}
@@ -72,7 +72,7 @@ func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ok = s.cache.Add(key, res.Url)
+	ok = s.cache.Add(ctx, key, res.Url)
 	if !ok {
 		log.Error("Failed to add url to cache", err)
 	}

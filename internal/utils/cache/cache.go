@@ -1,52 +1,37 @@
 package cache
 
 import (
-	"errors"
+	"context"
+
+	"github.com/redis/go-redis/v9"
 )
 
-var ErrCacheCapacity = errors.New("cache can't have 0 capacity")
-
-type LRUCache struct {
-	capacity int
-	keys     []string
-	itemsMap map[string]string
+type Cache struct {
+	client *redis.Client
 }
 
-func New(capacity int) (*LRUCache, error) {
-	if capacity == 0 {
-		return nil, ErrCacheCapacity
+func New(cacheUrl string) (*Cache, error) {
+	opt, err := redis.ParseURL(cacheUrl)
+	if err != nil {
+		return nil, err
 	}
 
-	return &LRUCache{
-		capacity: capacity,
-		keys:     []string{},
-		itemsMap: map[string]string{},
+	return &Cache{
+		client: redis.NewClient(opt),
 	}, nil
 }
 
-func (c *LRUCache) Get(key string) (string, bool) {
-	for i, cKey := range c.keys {
-		if key == cKey {
-			c.keys = append(c.keys[:i], c.keys[i+1:]...)
-			c.keys = append(c.keys, cKey)
-			return c.itemsMap[key], true
-		}
+func (c *Cache) Get(ctx context.Context, key string) (string, bool) {
+	val, err := c.client.Get(ctx, key).Result()
+	if err != nil {
+		return "", false
 	}
 
-	return "", false
+	return val, true
 }
 
-func (c *LRUCache) Add(key, value string) bool {
-	if _, exists := c.itemsMap[key]; exists {
-		return false
-	}
+func (c *Cache) Add(ctx context.Context, key, value string) bool {
+	err := c.client.Set(ctx, key, value, 0).Err()
 
-	if len(c.keys) == c.capacity {
-		c.keys = c.keys[1:]
-	}
-
-	c.keys = append(c.keys, key)
-	c.itemsMap[key] = value
-
-	return true
+	return err == nil
 }
