@@ -18,9 +18,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: mongo
     ports:
       - "27017:27017"
-  redis:
+  cache:
     image: redis:7
-    container_name: redis
+    container_name: cache_container
     restart: unless-stopped
     ports:
       - "6379:6379"
