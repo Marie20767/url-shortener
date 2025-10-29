@@ -8,6 +8,7 @@ import (
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -42,7 +43,7 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to start transaction")
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck
 	key, err := h.KeyStore.GetUnused(ctx, tx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")

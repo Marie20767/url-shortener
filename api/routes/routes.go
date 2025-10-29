@@ -1,7 +1,8 @@
 package routes
 
 import (
-	"github.com/Marie20767/url-shortener/api/handlers/url"
+	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
+
 	"github.com/labstack/echo/v4"
 )
 
