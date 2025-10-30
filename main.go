@@ -20,7 +20,7 @@ import (
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
-const shutdownWait = 10
+const serverTimeout = 10
 
 type stores struct {
 	keyStore *keys.KeyStore
@@ -73,7 +73,7 @@ func run() error {
 		return err
 	}
 
-	e := setupServer(stores{
+	e := setupServer(&stores{
 		keyStore: keyStore,
 		urlStore: urlStore,
 	}, cfg.Domain)
@@ -95,7 +95,7 @@ func run() error {
 	<-stopCtx.Done()
 	slog.Info("cron jobs completed")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownWait*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), serverTimeout*time.Second)
 	defer cancel()
 
 	if err := e.Shutdown(shutdownCtx); err != nil {
@@ -118,7 +118,7 @@ func setupKeyCron(cron *keycron.Cron) (context.CancelFunc, error) {
 	return cancelCron, nil
 }
 
-func setupServer(stores stores, domain string) *echo.Echo {
+func setupServer(stores *stores, domain string) *echo.Echo {
 	e := echo.New()
 	e.Validator = &customValidator{validator: validator.New()}
 	urlHandler := &urlhandlers.UrlHandler{
