@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
@@ -77,7 +78,10 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 
 	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get long url")
+		if err == mongo.ErrNoDocuments {
+			return echo.NewHTTPError(http.StatusNotFound, "Url not found")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get url")
 	}
 
 	return ctx.Redirect(http.StatusMovedPermanently, longUrl)
