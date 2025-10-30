@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -16,8 +17,9 @@ type Url struct {
 }
 
 type Key struct {
-	DbUrl    string
-	CacheUrl string
+	DbUrl        string
+	CacheUrl     string
+	CronSchedule string
 }
 
 type cfg struct {
@@ -29,7 +31,7 @@ type cfg struct {
 
 func ParseEnv() (*cfg, error) {
 	if err := godotenv.Load(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse env vars: %w", err)
 	}
 
 	envVars := map[string]*string{
@@ -52,13 +54,14 @@ func ParseEnv() (*cfg, error) {
 	}
 
 	Key := &Key{
-		DbUrl:    *envVars["KEY_DB_URL"],
-		CacheUrl: *envVars["KEY_CACHE_URL"],
+		DbUrl:        *envVars["KEY_DB_URL"],
+		CacheUrl:     *envVars["KEY_CACHE_URL"],
+		CronSchedule: *envVars["KEY_CRON_SCHEDULE"],
 	}
 
 	urlDbTimeout, err := strconv.Atoi(*envVars["URL_DB_TIMEOUT"])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse all env vars: %w", err)
 	}
 	Url := &Url{
 		DbUrl:     *envVars["URL_DB_URL"],

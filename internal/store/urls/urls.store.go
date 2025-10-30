@@ -2,12 +2,13 @@ package urls
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
-	"github.com/Marie20767/url-shortener/internal/utils/cache/url"
+	urlcache "github.com/Marie20767/url-shortener/internal/cache/url"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
@@ -22,7 +23,7 @@ func connectDb(cfg *config.Url) (*mongo.Database, error) {
 	clientOpts := options.Client().ApplyURI(cfg.DbUrl).SetConnectTimeout(timeOut)
 	mongoClient, err := mongo.Connect(clientOpts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to url db: %w", err)
 	}
 
 	return mongoClient.Database(cfg.DbName), nil
