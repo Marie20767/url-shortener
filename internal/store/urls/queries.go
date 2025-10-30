@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -72,10 +71,7 @@ func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ok = s.cache.Add(ctx, key, res.Url)
-	if !ok {
-		log.Error("Failed to add url to cache", err)
-	}
+	s.cache.Add(ctx, key, res.Url)
 
 	return res.Url, nil
 }

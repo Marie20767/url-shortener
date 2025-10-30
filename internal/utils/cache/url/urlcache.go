@@ -1,7 +1,8 @@
-package cache
+package urlcache
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -22,16 +23,21 @@ func New(cacheUrl string) (*Cache, error) {
 }
 
 func (c *Cache) Get(ctx context.Context, key string) (string, bool) {
-	val, err := c.client.Get(ctx, key).Result()
+	url, err := c.client.Get(ctx, key).Result()
 	if err != nil {
+		if err != redis.Nil {
+			fmt.Println(">>> failed to fetch long url from cache: ", err)
+		}
 		return "", false
 	}
 
-	return val, true
+	return url, true
 }
 
-func (c *Cache) Add(ctx context.Context, key, value string) bool {
+func (c *Cache) Add(ctx context.Context, key, value string) {
+	// TODO: implement expiry
 	err := c.client.Set(ctx, key, value, 0).Err()
-
-	return err == nil
+	if err != nil {
+		fmt.Println(">>> failed to insert keys into cache: ", err)
+	}
 }

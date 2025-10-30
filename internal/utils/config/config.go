@@ -16,7 +16,8 @@ type Url struct {
 }
 
 type Key struct {
-	DbUrl string
+	DbUrl    string
+	CacheUrl string
 }
 
 type cfg struct {
@@ -33,6 +34,7 @@ func ParseEnv() (*cfg, error) {
 
 	envVars := map[string]*string{
 		"KEY_DB_URL":     nil,
+		"KEY_CACHE_URL":  nil,
 		"URL_DB_URL":     nil,
 		"URL_DB_NAME":    nil,
 		"URL_DB_TIMEOUT": nil,
@@ -50,7 +52,8 @@ func ParseEnv() (*cfg, error) {
 	}
 
 	Key := &Key{
-		DbUrl: *envVars["KEY_DB_URL"],
+		DbUrl:    *envVars["KEY_DB_URL"],
+		CacheUrl: *envVars["KEY_CACHE_URL"],
 	}
 
 	urlDbTimeout, err := strconv.Atoi(*envVars["URL_DB_TIMEOUT"])

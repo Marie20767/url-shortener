@@ -7,12 +7,13 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/Marie20767/url-shortener/internal/utils/cache/key"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
 type KeyStore struct {
 	pool  *pgxpool.Pool
-	cache []string
+	cache *keycache.Cache
 	mu    sync.Mutex
 }
 
@@ -26,11 +27,14 @@ func New(ctx context.Context, cfg *config.Key) (*KeyStore, error) {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
 	}
 
-	var cache []string
+	newCache, err := keycache.New(cfg.CacheUrl)
+	if err != nil {
+		return nil, err
+	}
 
 	return &KeyStore{
 		pool:  dbPool,
-		cache: cache,
+		cache: newCache,
 	}, nil
 }
 
