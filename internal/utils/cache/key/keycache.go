@@ -3,12 +3,14 @@ package keycache
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
 )
 
 type Cache struct {
 	client *redis.Client
+	mu     sync.Mutex
 }
 
 func New(cacheUrl string) (*Cache, error) {
@@ -23,6 +25,7 @@ func New(cacheUrl string) (*Cache, error) {
 }
 
 func (c *Cache) Get(ctx context.Context) (string, bool) {
+	c.mu.Lock()
 	key, err := c.client.RandomKey(ctx).Result()
 	if err != nil {
 		fmt.Println(">>> failed to fetch key from cache: ", err)
@@ -33,6 +36,7 @@ func (c *Cache) Get(ctx context.Context) (string, bool) {
 	}
 
 	deleted, err := c.client.Del(ctx, key).Result()
+	c.mu.Unlock()
 	if err != nil {
 		fmt.Println(">>> failed to delete used key from cache: ", err)
 		return "", false
