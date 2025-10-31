@@ -2,12 +2,15 @@ package urls
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
-	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
+
+var ErrNotFound = errors.New("url not found")
 
 type UrlData struct {
 	Key    string     `bson:"key_value"`
@@ -19,7 +22,7 @@ func (s *UrlStore) Insert(ctx context.Context, urlData *UrlData) (any, error) {
 	db := s.conn.Collection(s.collection)
 	res, err := db.InsertOne(ctx, urlData)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to insert new url into db: %w", err)
 	}
 
 	return res.InsertedID, nil
@@ -29,7 +32,7 @@ func (s *UrlStore) DeleteById(ctx context.Context, id any) error {
 	db := s.conn.Collection(s.collection)
 	_, err := db.DeleteOne(ctx, bson.M{"_id": id})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete url from db: %w", err)
 	}
 
 	return nil
@@ -52,7 +55,7 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 		if err == mongo.ErrNoDocuments {
 			break
 		} else if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to delete expired url from db: %w", err)
 		}
 		deletedKeys = append(deletedKeys, deleted.Key)
 	}
@@ -61,7 +64,7 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 }
 
 func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
-	url, ok := s.cache.Get(key)
+	url, ok := s.cache.Get(ctx, key)
 	if ok {
 		return url, nil
 	}
@@ -70,12 +73,13 @@ func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 	db := s.conn.Collection(s.collection)
 	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
 	if err != nil {
-		return "", err
+		if err == mongo.ErrNoDocuments {
+			return "", ErrNotFound
+		}
+
+		return "", fmt.Errorf("failed to fetch url from db: %w", err)
 	}
-	ok = s.cache.Add(key, res.Url)
-	if !ok {
-		log.Error("Failed to add url to cache", err)
-	}
+	s.cache.Add(ctx, key, res.Url)
 
 	return res.Url, nil
 }

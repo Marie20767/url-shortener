@@ -5,15 +5,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
+
 	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
 	"github.com/Marie20767/url-shortener/api/routes"
 	"github.com/Marie20767/url-shortener/internal/keygenerator"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
-
-	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
 )
 
 type CustomValidator struct {
