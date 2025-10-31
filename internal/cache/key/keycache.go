@@ -23,22 +23,33 @@ func New(cacheUrl string) (*Cache, error) {
 	}, nil
 }
 
+// lua script needed to ensure atomic key fetching from the cache across all server instances
+var getAndDelScript = redis.NewScript(`
+	local key = redis.call("RANDOMKEY")
+	if not key then
+			return nil
+	end
+	local deleted = redis.call("DEL", key)
+	if deleted == 1 then
+			return key
+	else
+			return nil
+	end
+`)
+
 func (c *Cache) Get(ctx context.Context) (string, bool) {
-	key, err := c.client.RandomKey(ctx).Result()
+	res, err := getAndDelScript.Run(ctx, c.client, nil).Result()
 	if err != nil {
 		slog.Error("failed to fetch key from cache", slog.Any("error", err))
 		return "", false
 	}
-	if key == "" {
+	if res == nil {
 		return "", false
 	}
 
-	deleted, err := c.client.Del(ctx, key).Result()
-	if err != nil {
-		slog.Error("failed to delete used key from cache", slog.Any("error", err))
-		return "", false
-	}
-	if deleted == 0 {
+	key, ok := res.(string)
+	if !ok {
+	    slog.Error("unexpected result type from key cache", slog.Any("res", res))
 		return "", false
 	}
 

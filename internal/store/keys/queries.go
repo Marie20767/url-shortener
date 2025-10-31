@@ -14,9 +14,7 @@ func (s *KeyStore) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
 }
 
 func (s *KeyStore) GetUnused(ctx context.Context, tx pgx.Tx) (string, error) {
-	s.mu.Lock()
 	claimedKey, ok := s.cache.Get(ctx)
-	s.mu.Unlock()
 	if ok {
 		_, err := tx.Exec(ctx, "UPDATE keys SET used = true WHERE key_value = $1", claimedKey)
 		if err != nil {

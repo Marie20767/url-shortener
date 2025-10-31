@@ -3,7 +3,6 @@ package keys
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -14,7 +13,6 @@ import (
 type KeyStore struct {
 	pool  *pgxpool.Pool
 	cache *keycache.Cache
-	mu    sync.Mutex
 }
 
 func New(ctx context.Context, cfg *config.Key) (*KeyStore, error) {

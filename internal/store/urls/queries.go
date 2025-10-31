@@ -2,12 +2,15 @@ package urls
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
+
+var ErrNotFound = errors.New("url not found")
 
 type UrlData struct {
 	Key    string     `bson:"key_value"`
@@ -70,6 +73,10 @@ func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 	db := s.conn.Collection(s.collection)
 	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return "", ErrNotFound
+		}
+
 		return "", fmt.Errorf("failed to fetch url from db: %w", err)
 	}
 	s.cache.Add(ctx, key, res.Url)

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
@@ -42,23 +41,23 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 
 	tx, err := h.KeyStore.BeginTransaction(ctx)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to start transaction")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to start transaction")
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck
 	key, err := h.KeyStore.GetUnused(ctx, tx)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unused key")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get unused key")
 	}
 
 	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
 	id, err := h.UrlStore.Insert(ctx, urlData)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert new url data")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new url data")
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		_ = h.UrlStore.DeleteById(ctx, id)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to commit transaction")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction")
 	}
 
 	return echoCtx.JSON(http.StatusOK, map[string]string{
@@ -78,15 +77,15 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 
 	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key))
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return echo.NewHTTPError(http.StatusNotFound, "Url not found")
+		if err == urls.ErrNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "url not found")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get url")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get url")
 	}
 
 	return ctx.Redirect(http.StatusMovedPermanently, longUrl)
 }
 
 func validationErr() error {
-	return echo.NewHTTPError(http.StatusBadRequest, "Validation Error")
+	return echo.NewHTTPError(http.StatusBadRequest, "validation Error")
 }
