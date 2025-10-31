@@ -15,17 +15,17 @@ const (
 	alphanumericChars = "abcdefghijklmnopqrstuvwxyz0123456789"
 )
 
-type keygenstore struct {
+type KeyGenStore struct {
 	keyStore *keys.KeyStore
 }
 
-func New(keyStore *keys.KeyStore) *keygenstore {
-	return &keygenstore{
+func New(keyStore *keys.KeyStore) *KeyGenStore {
+	return &KeyGenStore{
 		keyStore: keyStore,
 	}
 }
 
-func (s *keygenstore) Run(ctx context.Context) error {
+func (s *KeyGenStore) Run(ctx context.Context) error {
 	rowsInserted := 0
 
 	for rowsInserted < batchSize {
@@ -43,7 +43,7 @@ func (s *keygenstore) Run(ctx context.Context) error {
 
 		rows, err := s.keyStore.Insert(ctx, keysWithoutDuplicates)
 		if err != nil {
-			break
+			return fmt.Errorf("failed to insert newly generated keys: %w", err)
 		}
 
 		rowsInserted += rows

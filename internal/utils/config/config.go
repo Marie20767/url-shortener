@@ -35,14 +35,15 @@ func ParseEnv() (*cfg, error) {
 	}
 
 	envVars := map[string]*string{
-		"KEY_DB_URL":     nil,
-		"KEY_CACHE_URL":  nil,
-		"URL_DB_URL":     nil,
-		"URL_DB_NAME":    nil,
-		"URL_DB_TIMEOUT": nil,
-		"URL_CACHE_URL":  nil,
-		"PORT":           nil,
-		"API_DOMAIN":     nil,
+		"API_DOMAIN":        nil,
+		"KEY_CACHE_URL":     nil,
+		"KEY_CRON_SCHEDULE": nil,
+		"KEY_DB_URL":        nil,
+		"PORT":              nil,
+		"URL_CACHE_URL":     nil,
+		"URL_DB_NAME":       nil,
+		"URL_DB_TIMEOUT":    nil,
+		"URL_DB_URL":        nil,
 	}
 
 	for key := range envVars {

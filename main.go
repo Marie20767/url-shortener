@@ -58,17 +58,18 @@ func run() error {
 		return err
 	}
 	defer keyStore.Close()
-	slog.Info("connected to key db successfully!")
+	slog.Info("successfully connected to key db!")
 
 	urlStore, err := urls.New(cfg.Url)
 	if err != nil {
 		return err
 	}
 	defer urlStore.Close(ctx) //nolint:errcheck
-	slog.Info("connected to url db successfully!")
+	slog.Info("successfully connected to url db!")
 
 	keyCron := keycron.New(keyStore, cfg.Key.CronSchedule)
 	cancelCron, err := setupKeyCron(keyCron)
+	defer cancelCron()
 	if err != nil {
 		return err
 	}
@@ -107,11 +108,10 @@ func run() error {
 
 func setupKeyCron(cron *keycron.Cron) (context.CancelFunc, error) {
 	kCronCtx, cancelCron := context.WithCancel(context.Background())
-	defer cancelCron()
 
 	kCronErr := cron.Add(kCronCtx)
 	if kCronErr != nil {
-		return nil, kCronErr
+		return cancelCron, kCronErr
 	}
 	cron.Start()
 

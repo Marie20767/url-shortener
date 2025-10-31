@@ -12,16 +12,16 @@ import (
 )
 
 type Cron struct {
-	client   *cron.Cron
-	store    *keys.KeyStore
-	schedule string
+	client       *cron.Cron
+	keyGenerator *keygenerator.KeyGenStore
+	schedule     string
 }
 
 func New(store *keys.KeyStore, schedule string) *Cron {
 	return &Cron{
-		client:   cron.New(),
-		store:    store,
-		schedule: schedule,
+		client:       cron.New(),
+		keyGenerator: keygenerator.New(store),
+		schedule:     schedule,
 	}
 }
 
@@ -48,8 +48,9 @@ func (c *Cron) Stop() context.Context {
 }
 
 func (c *Cron) generateKeys(ctx context.Context) {
-	keyGen := keygenerator.New(c.store)
-	if err := keyGen.Run(ctx); err != nil {
-		slog.Error("failed to generate keys", slog.Any("error", err))
+	if err := c.keyGenerator.Run(ctx); err != nil {
+		slog.Error(err.Error())
+	} else {
+		slog.Info("successfully generated keys!")
 	}
 }
