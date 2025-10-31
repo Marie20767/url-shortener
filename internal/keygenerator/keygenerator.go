@@ -3,7 +3,7 @@ package keygenerator
 import (
 	"context"
 	"crypto/rand"
-	"errors"
+	"fmt"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/utils/set"
@@ -15,17 +15,17 @@ const (
 	alphanumericChars = "abcdefghijklmnopqrstuvwxyz0123456789"
 )
 
-type keygenstore struct {
+type KeyGenStore struct {
 	keyStore *keys.KeyStore
 }
 
-func New(keyStore *keys.KeyStore) *keygenstore {
-	return &keygenstore{
+func New(keyStore *keys.KeyStore) *KeyGenStore {
+	return &KeyGenStore{
 		keyStore: keyStore,
 	}
 }
 
-func (s *keygenstore) Generate(ctx context.Context) error {
+func (s *KeyGenStore) Run(ctx context.Context) error {
 	rowsInserted := 0
 
 	for rowsInserted < batchSize {
@@ -34,7 +34,7 @@ func (s *keygenstore) Generate(ctx context.Context) error {
 		for range batchSize {
 			random, err := randomString(keyLength)
 			if err != nil {
-				return errors.New("failed to create url keys")
+				return fmt.Errorf("failed to generate keys: %w", err)
 			}
 			newKeys = append(newKeys, random)
 		}
@@ -43,7 +43,7 @@ func (s *keygenstore) Generate(ctx context.Context) error {
 
 		rows, err := s.keyStore.Insert(ctx, keysWithoutDuplicates)
 		if err != nil {
-			break
+			return fmt.Errorf("failed to insert newly generated keys: %w", err)
 		}
 
 		rowsInserted += rows

@@ -3,6 +3,7 @@ package urlcache
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -14,7 +15,7 @@ type Cache struct {
 func New(cacheUrl string) (*Cache, error) {
 	opt, err := redis.ParseURL(cacheUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new url cache: %w", err)
 	}
 
 	return &Cache{
@@ -26,7 +27,7 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool) {
 	url, err := c.client.Get(ctx, key).Result()
 	if err != nil {
 		if err != redis.Nil {
-			fmt.Println(">>> failed to fetch long url from cache: ", err)
+			slog.Error("failed to fetch url from cache: ", slog.Any("error", err))
 		}
 		return "", false
 	}
@@ -38,6 +39,6 @@ func (c *Cache) Add(ctx context.Context, key, value string) {
 	// TODO: implement expiry
 	err := c.client.Set(ctx, key, value, 0).Err()
 	if err != nil {
-		fmt.Println(">>> failed to insert keys into cache: ", err)
+		slog.Error("failed to insert urls into cache: ", slog.Any("error", err))
 	}
 }
