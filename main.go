@@ -14,7 +14,7 @@ import (
 
 	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
 	"github.com/Marie20767/url-shortener/api/routes"
-	"github.com/Marie20767/url-shortener/internal/cron/key"
+	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"

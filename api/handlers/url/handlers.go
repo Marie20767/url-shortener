@@ -1,4 +1,4 @@
-package urlhandlers
+package handlers
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
+	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 )
 
 type UrlHandler struct {
@@ -49,7 +50,7 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get unused key")
 	}
 
-	urlData := &urls.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
+	urlData := &model.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
 	id, err := h.UrlStore.Insert(ctx, urlData)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new url data")
@@ -66,6 +67,7 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 }
 
 func (h *UrlHandler) GetLong(ctx echo.Context) error {
+	now := time.Now().UTC()
 	var param KeyParam
 	if err := ctx.Bind(&param); err != nil {
 		return err
@@ -75,13 +77,15 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key))
+	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key), now)
 	if err != nil {
 		if err == urls.ErrNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "url not found")
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get url")
 	}
+
+	fmt.Println(">>> longUrl: ", longUrl)
 
 	return ctx.Redirect(http.StatusMovedPermanently, longUrl)
 }

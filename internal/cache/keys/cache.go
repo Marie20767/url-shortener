@@ -1,4 +1,4 @@
-package keycache
+package cache
 
 import (
 	"context"
@@ -49,7 +49,7 @@ func (c *Cache) Get(ctx context.Context) (string, bool) {
 
 	key, ok := res.(string)
 	if !ok {
-	    slog.Error("unexpected result type from key cache", slog.Any("res", res))
+		slog.Error("unexpected result type from key cache", slog.Any("res", res))
 		return "", false
 	}
 

@@ -1,4 +1,4 @@
-package keycron
+package cron
 
 import (
 	"context"
@@ -7,21 +7,21 @@ import (
 
 	"github.com/robfig/cron/v3"
 
-	"github.com/Marie20767/url-shortener/internal/keygenerator"
+	"github.com/Marie20767/url-shortener/internal/keysgenerator"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 )
 
 type Cron struct {
-	client       *cron.Cron
-	keyGenerator *keygenerator.KeyGenStore
-	schedule     string
+	client        *cron.Cron
+	keysgenerator *keysgenerator.KeyGenStore
+	schedule      string
 }
 
 func New(store *keys.KeyStore, schedule string) *Cron {
 	return &Cron{
-		client:       cron.New(),
-		keyGenerator: keygenerator.New(store),
-		schedule:     schedule,
+		client:        cron.New(),
+		keysgenerator: keysgenerator.New(store),
+		schedule:      schedule,
 	}
 }
 
@@ -48,7 +48,7 @@ func (c *Cron) Stop() context.Context {
 }
 
 func (c *Cron) generateKeys(ctx context.Context) {
-	if err := c.keyGenerator.Run(ctx); err != nil {
+	if err := c.keysgenerator.Run(ctx); err != nil {
 		slog.Error(err.Error())
 	} else {
 		slog.Info("successfully generated keys!")
