@@ -49,7 +49,7 @@ func (c *Cache) Get(ctx context.Context) (string, bool) {
 
 	key, ok := res.(string)
 	if !ok {
-	    slog.Error("unexpected result type from key cache", slog.Any("res", res))
+		slog.Error("unexpected result type from key cache", slog.Any("res", res))
 		return "", false
 	}
 
@@ -61,4 +61,14 @@ func (c *Cache) Add(ctx context.Context, keyMap map[string]string) {
 	if err != nil {
 		slog.Error("failed to insert keys into cache", slog.Any("error", err))
 	}
+}
+
+func (c *Cache) GetSize(ctx context.Context) int64 {
+	keysCount, err := c.client.DBSize(ctx).Result()
+	if err != nil {
+		slog.Error("failed to get keys cache size", slog.Any("error", err))
+		return 0
+	}
+
+	return keysCount
 }

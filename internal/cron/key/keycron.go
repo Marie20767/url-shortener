@@ -2,7 +2,6 @@ package keycron
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/robfig/cron/v3"
@@ -26,13 +25,17 @@ func New(store *keys.KeyStore, schedule string) *Cron {
 }
 
 func (c *Cron) Add(ctx context.Context) error {
-	c.generateKeys(ctx)
+	if err := c.keyGenerator.Run(ctx); err != nil {
+		return err
+	}
 
 	_, err := c.client.AddFunc(c.schedule, func() {
-		c.generateKeys(ctx)
+		if cronErr := c.keyGenerator.Run(ctx); cronErr != nil {
+			slog.Error(cronErr.Error())
+		}
 	})
 	if err != nil {
-		return fmt.Errorf("failed to add cron: %w", err)
+		return err
 	}
 
 	return nil
@@ -45,12 +48,4 @@ func (c *Cron) Start() {
 
 func (c *Cron) Stop() context.Context {
 	return c.client.Stop()
-}
-
-func (c *Cron) generateKeys(ctx context.Context) {
-	if err := c.keyGenerator.Run(ctx); err != nil {
-		slog.Error(err.Error())
-	} else {
-		slog.Info("successfully generated keys!")
-	}
 }

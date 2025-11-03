@@ -4,15 +4,17 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log/slog"
 
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/utils/set"
 )
 
 const (
-	batchSize         = 50
-	keyLength         = 8
 	alphanumericChars = "abcdefghijklmnopqrstuvwxyz0123456789"
+	batchSize         = 50
+	cacheMinSize      = 10
+	keyLength         = 8
 )
 
 type KeyGenStore struct {
@@ -26,8 +28,14 @@ func New(keyStore *keys.KeyStore) *KeyGenStore {
 }
 
 func (s *KeyGenStore) Run(ctx context.Context) error {
-	rowsInserted := 0
+	currentCacheSize := s.keyStore.GetCacheSize(ctx)
+	if currentCacheSize >= cacheMinSize {
+		slog.Info("cache", "size", currentCacheSize)
+		slog.Info("enough keys in cache, skipped key generation")
+		return nil
+	}
 
+	rowsInserted := 0
 	for rowsInserted < batchSize {
 		newKeys := make([]string, 0, batchSize)
 
@@ -48,6 +56,7 @@ func (s *KeyGenStore) Run(ctx context.Context) error {
 
 		rowsInserted += rows
 	}
+	slog.Info("successfully generated keys!")
 
 	return nil
 }
