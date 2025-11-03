@@ -2,7 +2,6 @@ package cron
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/robfig/cron/v3"
@@ -13,26 +12,30 @@ import (
 
 type Cron struct {
 	client        *cron.Cron
-	keysgenerator *keysgenerator.KeyGenStore
+	keysGenerator *keysgenerator.KeyGenStore
 	schedule      string
 }
 
 func New(store *keys.KeyStore, schedule string) *Cron {
 	return &Cron{
 		client:        cron.New(),
-		keysgenerator: keysgenerator.New(store),
+		keysGenerator: keysgenerator.New(store),
 		schedule:      schedule,
 	}
 }
 
 func (c *Cron) Add(ctx context.Context) error {
-	c.generateKeys(ctx)
+	if err := c.keysGenerator.Run(ctx); err != nil {
+		return err
+	}
 
 	_, err := c.client.AddFunc(c.schedule, func() {
-		c.generateKeys(ctx)
+		if cronErr := c.keysGenerator.Run(ctx); cronErr != nil {
+			slog.Error(cronErr.Error())
+		}
 	})
 	if err != nil {
-		return fmt.Errorf("failed to add cron: %w", err)
+		return err
 	}
 
 	return nil
@@ -45,12 +48,4 @@ func (c *Cron) Start() {
 
 func (c *Cron) Stop() context.Context {
 	return c.client.Stop()
-}
-
-func (c *Cron) generateKeys(ctx context.Context) {
-	if err := c.keysgenerator.Run(ctx); err != nil {
-		slog.Error(err.Error())
-	} else {
-		slog.Info("successfully generated keys!")
-	}
 }

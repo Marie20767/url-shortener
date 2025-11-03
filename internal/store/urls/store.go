@@ -12,6 +12,8 @@ import (
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
+const timeout = 5
+
 type UrlStore struct {
 	conn       *mongo.Database
 	collection string
@@ -19,7 +21,7 @@ type UrlStore struct {
 }
 
 func connectDb(cfg *config.Url) (*mongo.Database, error) {
-	timeOut := time.Duration(cfg.DbTimeout) * time.Second
+	timeOut := time.Duration(timeout) * time.Second
 	clientOpts := options.Client().ApplyURI(cfg.DbUrl).SetConnectTimeout(timeOut)
 	mongoClient, err := mongo.Connect(clientOpts)
 	if err != nil {

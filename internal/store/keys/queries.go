@@ -59,3 +59,7 @@ func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
 
 	return len(inserted), nil
 }
+
+func (s *KeyStore) GetCacheSize(ctx context.Context) int64 {
+	return s.cache.GetSize(ctx)
+}

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -12,7 +11,6 @@ import (
 type Url struct {
 	DbUrl     string
 	DbName    string
-	DbTimeout int
 	CacheUrl  string
 }
 
@@ -42,7 +40,6 @@ func ParseEnv() (*cfg, error) {
 		"PORT":              nil,
 		"URL_CACHE_URL":     nil,
 		"URL_DB_NAME":       nil,
-		"URL_DB_TIMEOUT":    nil,
 		"URL_DB_URL":        nil,
 	}
 
@@ -59,16 +56,10 @@ func ParseEnv() (*cfg, error) {
 		CacheUrl:     *envVars["KEY_CACHE_URL"],
 		CronSchedule: *envVars["KEY_CRON_SCHEDULE"],
 	}
-
-	urlDbTimeout, err := strconv.Atoi(*envVars["URL_DB_TIMEOUT"])
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse all env vars: %w", err)
-	}
 	Url := &Url{
-		DbUrl:     *envVars["URL_DB_URL"],
-		DbName:    *envVars["URL_DB_NAME"],
-		DbTimeout: urlDbTimeout,
-		CacheUrl:  *envVars["URL_CACHE_URL"],
+		DbUrl:    *envVars["URL_DB_URL"],
+		DbName:   *envVars["URL_DB_NAME"],
+		CacheUrl: *envVars["URL_CACHE_URL"],
 	}
 
 	cfg := &cfg{
