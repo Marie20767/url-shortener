@@ -12,14 +12,7 @@ import (
 	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 )
 
-var (
-	ErrNotFound      = errors.New("url not found")
-	notExpiredFilter = bson.M{
-		"expiry": bson.M{
-			"$lte": time.Now().UTC(),
-		},
-	}
-)
+var ErrNotFound = errors.New("url not found")
 
 func (s *UrlStore) Insert(ctx context.Context, urlData *model.UrlData) (any, error) {
 	if urlData.Expiry != nil {
@@ -48,13 +41,16 @@ func (s *UrlStore) DeleteById(ctx context.Context, id any) error {
 
 func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 	db := s.conn.Collection(s.collection)
+	filter := bson.M{
+		"expiry": bson.M{
+			"$lte": time.Now().UTC(),
+		},
+	}
 
 	var deletedKeys []string
-
 	for {
 		var deleted *model.UrlData
-
-		err := db.FindOneAndDelete(ctx, notExpiredFilter).Decode(&deleted)
+		err := db.FindOneAndDelete(ctx, filter).Decode(&deleted)
 		if err == mongo.ErrNoDocuments {
 			break
 		} else if err != nil {
@@ -72,11 +68,11 @@ func (s *UrlStore) Get(ctx context.Context, key string, currentTimeStamp time.Ti
 		return url, nil
 	}
 
-	keyFilter := bson.M{"key_value": key}
 	filters := bson.M{
-		"$and": []bson.M{
-			keyFilter,
-			notExpiredFilter,
+		"key_value": key,
+		"$or": []bson.M{
+			{"expiry": bson.M{"$gte": time.Now().UTC()}},
+			{"expiry": bson.M{"$exists": false}},
 		},
 	}
 
