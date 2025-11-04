@@ -57,6 +57,26 @@ func (s *KeyStore) GetUnused(ctx context.Context, tx pgx.Tx) (string, error) {
 	return claimedKey, nil
 }
 
+func (s *KeyStore) FreeUpUnusedKeys(ctx context.Context, keys []string) (int, error) {
+	batch := &pgx.Batch{}
+	for _, key := range keys {
+		batch.Queue("UPDATE keys SET used = false WHERE key_value = $1", key)
+	}
+	results := s.pool.SendBatch(ctx, batch)
+	defer results.Close()
+
+	count := 0
+	for range keys {
+		_, err := results.Exec()
+		if err != nil {
+			return count, err
+		}
+		count++
+	}
+
+	return count, nil
+}
+
 func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
 	// do nothing on conflict because we just want to ignore any duplicate keys
 	query := "INSERT INTO keys (key_value) SELECT UNNEST($1::varchar(8)[]) ON CONFLICT DO NOTHING RETURNING key_value"

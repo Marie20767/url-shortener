@@ -11,6 +11,7 @@ import (
 
 	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
 	"github.com/Marie20767/url-shortener/internal/cron/model"
+	urlcron "github.com/Marie20767/url-shortener/internal/cron/urls"
 	"github.com/Marie20767/url-shortener/internal/server"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
@@ -63,8 +64,8 @@ func run() error {
 		return err
 	}
 
-	urlCron := urlCron.New(urlStore, cfg.Key.CronSchedule)
-	cancelUrlCron, err := setUpCron(urlCron)
+	urlCron := urlcron.New(urlStore, keyStore, cfg.Key.CronSchedule)
+	cancelUrlCron, err := setupCron(urlCron)
 	defer cancelUrlCron()
 	if err != nil {
 		return err

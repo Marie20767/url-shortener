@@ -42,7 +42,7 @@ func (c *Cron) Add(ctx context.Context) error {
 
 func (c *Cron) Start() {
 	c.client.Start()
-	slog.Info("cron scheduler started", slog.String("schedule", c.schedule))
+	slog.Info("key cron scheduler started", slog.String("schedule", c.schedule))
 }
 
 func (c *Cron) Stop() context.Context {

@@ -54,7 +54,7 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 		if err == mongo.ErrNoDocuments {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("failed to delete expired url from db: %w", err)
+			return nil, err
 		}
 		deletedKeys = append(deletedKeys, deleted.Key)
 	}
