@@ -15,6 +15,7 @@ import (
 	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
 	"github.com/Marie20767/url-shortener/api/routes"
 	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
+	"github.com/Marie20767/url-shortener/internal/cron/model"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
@@ -68,8 +69,15 @@ func run() error {
 	slog.Info("successfully connected to url db!")
 
 	keyCron := keycron.New(keyStore, cfg.Key.CronSchedule)
-	cancelCron, err := setupKeyCron(keyCron)
-	defer cancelCron()
+	cancelKeyCron, err := setupCron(keyCron)
+	defer cancelKeyCron()
+	if err != nil {
+		return err
+	}
+
+	urlCron := urlCron.New(urlStore, cfg.Key.CronSchedule)
+	cancelUrlCron, err := setUpCron(urlCron)
+	defer cancelUrlCron()
 	if err != nil {
 		return err
 	}
@@ -89,12 +97,17 @@ func run() error {
 	<-ctx.Done()
 	slog.Info("shutdown signal received")
 
-	// cancel cron context to prevent new jobs from starting
-	cancelCron()
+	// cancel cron contexts to prevent new jobs from starting
+	cancelKeyCron()
+	cancelUrlCron()
 
-	stopCtx := keyCron.Stop()
-	<-stopCtx.Done()
-	slog.Info("cron jobs completed")
+	stopKeyCtx := keyCron.Stop()
+	<-stopKeyCtx.Done()
+	slog.Info("key cron jobs completed")
+
+	stopUrlCtx := urlCron.Stop()
+	<-stopUrlCtx.Done()
+	slog.Info("url cron jobs completed")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), serverTimeout*time.Second)
 	defer cancel()
@@ -106,12 +119,12 @@ func run() error {
 	return nil
 }
 
-func setupKeyCron(cron *keycron.Cron) (context.CancelFunc, error) {
-	kCronCtx, cancelCron := context.WithCancel(context.Background())
+func setupCron(cron model.CronLike) (context.CancelFunc, error) {
+	cronCtx, cancelCron := context.WithCancel(context.Background())
 
-	kCronErr := cron.Add(kCronCtx)
-	if kCronErr != nil {
-		return cancelCron, kCronErr
+	err := cron.Add(cronCtx)
+	if err != nil {
+		return cancelCron, err
 	}
 	cron.Start()
 
