@@ -37,6 +37,11 @@ func run() error {
 		return err
 	}
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: cfg.LogLevel,
+	}))
+	slog.SetDefault(logger)
+
 	keyStore, err := keys.New(ctx, cfg.Key)
 	if err != nil {
 		return err
