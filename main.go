@@ -9,31 +9,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
-
-	urlhandlers "github.com/Marie20767/url-shortener/api/handlers/url"
-	"github.com/Marie20767/url-shortener/api/routes"
 	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
+	"github.com/Marie20767/url-shortener/internal/cron/model"
+	"github.com/Marie20767/url-shortener/internal/server"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
 const serverTimeout = 10
-
-type stores struct {
-	keyStore *keys.KeyStore
-	urlStore *urls.UrlStore
-}
-
-type customValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *customValidator) Validate(i any) error {
-	return cv.validator.Struct(i)
-}
 
 func main() {
 	if err := run(); err != nil {
@@ -68,19 +52,15 @@ func run() error {
 	slog.Info("successfully connected to url db!")
 
 	keyCron := keycron.New(keyStore, cfg.Key.CronSchedule)
-	cancelCron, err := setupKeyCron(keyCron)
-	defer cancelCron()
+	cancelKeyCron, err := setupCron(keyCron)
+	defer cancelKeyCron()
 	if err != nil {
 		return err
 	}
 
-	e := setupServer(&stores{
-		keyStore: keyStore,
-		urlStore: urlStore,
-	}, cfg.Domain)
-
+	s := server.New(keyStore, urlStore, cfg.Domain)
 	go func() {
-		if err := e.Start(":" + cfg.Port); err != nil && err != http.ErrServerClosed {
+		if err := s.Start(cfg.Port); err != nil && err != http.ErrServerClosed {
 			slog.Error("server error", slog.Any("error", err))
 		}
 	}()
@@ -89,44 +69,31 @@ func run() error {
 	<-ctx.Done()
 	slog.Info("shutdown signal received")
 
-	// cancel cron context to prevent new jobs from starting
-	cancelCron()
+	// cancel cron contexts to prevent new jobs from starting
+	cancelKeyCron()
 
-	stopCtx := keyCron.Stop()
-	<-stopCtx.Done()
-	slog.Info("cron jobs completed")
+	stopKeyCtx := keyCron.Stop()
+	<-stopKeyCtx.Done()
+	slog.Info("key cron jobs completed")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), serverTimeout*time.Second)
 	defer cancel()
 
-	if err := e.Shutdown(shutdownCtx); err != nil {
+	if err := s.Stop(shutdownCtx); err != nil {
 		slog.Error("server shutdown error", slog.Any("error", err))
 	}
 
 	return nil
 }
 
-func setupKeyCron(cron *keycron.Cron) (context.CancelFunc, error) {
-	kCronCtx, cancelCron := context.WithCancel(context.Background())
+func setupCron(cron model.CronLike) (context.CancelFunc, error) {
+	cronCtx, cancelCron := context.WithCancel(context.Background())
 
-	kCronErr := cron.Add(kCronCtx)
-	if kCronErr != nil {
-		return cancelCron, kCronErr
+	err := cron.Add(cronCtx)
+	if err != nil {
+		return cancelCron, err
 	}
 	cron.Start()
 
 	return cancelCron, nil
-}
-
-func setupServer(stores *stores, domain string) *echo.Echo {
-	e := echo.New()
-	e.Validator = &customValidator{validator: validator.New()}
-	urlHandler := &urlhandlers.UrlHandler{
-		KeyStore:  stores.keyStore,
-		UrlStore:  stores.urlStore,
-		ApiDomain: domain,
-	}
-	routes.RegisterAll(e, urlHandler)
-
-	return e
 }

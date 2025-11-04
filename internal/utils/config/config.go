@@ -9,9 +9,9 @@ import (
 )
 
 type Url struct {
-	DbUrl     string
-	DbName    string
-	CacheUrl  string
+	DbUrl    string
+	DbName   string
+	CacheUrl string
 }
 
 type Key struct {

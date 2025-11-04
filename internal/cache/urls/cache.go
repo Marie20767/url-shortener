@@ -46,7 +46,7 @@ func (c *Cache) Add(ctx context.Context, urlData *model.UrlData, currentTimestam
 	default:
 		expiry = currentTimestamp.Sub(*urlData.Expiry)
 	}
-	
+
 	err := c.client.Set(ctx, urlData.Key, urlData.Url, expiry).Err()
 	if err != nil {
 		slog.Error("failed to insert urls into cache: ", slog.Any("error", err))
