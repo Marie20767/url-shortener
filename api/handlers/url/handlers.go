@@ -85,8 +85,6 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get url")
 	}
 
-	fmt.Println(">>> longUrl: ", longUrl)
-
 	return ctx.Redirect(http.StatusMovedPermanently, longUrl)
 }
 
