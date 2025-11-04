@@ -3,6 +3,7 @@ package keycache
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -14,7 +15,7 @@ type Cache struct {
 func New(cacheUrl string) (*Cache, error) {
 	opt, err := redis.ParseURL(cacheUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new key cache: %w", err)
 	}
 
 	return &Cache{
@@ -39,7 +40,7 @@ var getAndDelScript = redis.NewScript(`
 func (c *Cache) Get(ctx context.Context) (string, bool) {
 	res, err := getAndDelScript.Run(ctx, c.client, nil).Result()
 	if err != nil {
-		fmt.Println(">>> failed to fetch key from cache: ", err)
+		slog.Error("failed to fetch key from cache", slog.Any("error", err))
 		return "", false
 	}
 	if res == nil {
@@ -48,7 +49,7 @@ func (c *Cache) Get(ctx context.Context) (string, bool) {
 
 	key, ok := res.(string)
 	if !ok {
-		fmt.Println(">>> unexpected result type from cache:", res)
+		slog.Error("unexpected result type from key cache", slog.Any("res", res))
 		return "", false
 	}
 
@@ -58,6 +59,29 @@ func (c *Cache) Get(ctx context.Context) (string, bool) {
 func (c *Cache) Add(ctx context.Context, keyMap map[string]string) {
 	err := c.client.MSet(ctx, keyMap).Err()
 	if err != nil {
-		fmt.Println(">>> failed to insert keys into cache: ", err)
+		slog.Error("failed to insert keys into cache", slog.Any("error", err))
 	}
+}
+
+func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
+	cacheRefillThreshold := 10
+	currentCacheSize := c.getSize(ctx)
+	slog.Info("cache", "size", currentCacheSize)
+
+	if currentCacheSize < int64(cacheRefillThreshold) {
+		return true
+	}
+
+	slog.Info("enough keys in cache, skipped key generation")
+	return false
+}
+
+func (c *Cache) getSize(ctx context.Context) int64 {
+	keysCount, err := c.client.DBSize(ctx).Result()
+	if err != nil {
+		slog.Error("failed to get keys cache size", slog.Any("error", err))
+		return 0
+	}
+
+	return keysCount
 }
