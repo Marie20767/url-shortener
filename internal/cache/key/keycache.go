@@ -63,7 +63,20 @@ func (c *Cache) Add(ctx context.Context, keyMap map[string]string) {
 	}
 }
 
-func (c *Cache) GetSize(ctx context.Context) int64 {
+func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
+	cacheRefillThreshold := 10
+	currentCacheSize := c.getSize(ctx)
+	slog.Info("cache", "size", currentCacheSize)
+
+	if currentCacheSize < int64(cacheRefillThreshold) {
+		return true
+	}
+
+	slog.Info("enough keys in cache, skipped key generation")
+	return false
+}
+
+func (c *Cache) getSize(ctx context.Context) int64 {
 	keysCount, err := c.client.DBSize(ctx).Result()
 	if err != nil {
 		slog.Error("failed to get keys cache size", slog.Any("error", err))

@@ -2,9 +2,19 @@ package keys
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
+
+	"github.com/Marie20767/url-shortener/internal/utils/set"
+)
+
+const (
+	alphanumericChars = "abcdefghijklmnopqrstuvwxyz0123456789"
+	keyBatchSize      = 50
+	keyLength         = 8
 )
 
 func (s *KeyStore) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
@@ -14,6 +24,16 @@ func (s *KeyStore) BeginTransaction(ctx context.Context) (pgx.Tx, error) {
 }
 
 func (s *KeyStore) GetUnused(ctx context.Context, tx pgx.Tx) (string, error) {
+	if s.cache.ShouldRefillCache(ctx) {
+		// prevents blocking response while new keys are being generated
+		go func() {
+			if err := s.GenerateAndStoreKeys(ctx); err != nil {
+				// in future this could trigger an alert
+				slog.Error(err.Error())
+			}
+		}()
+	}
+
 	claimedKey, ok := s.cache.Get(ctx)
 	if ok {
 		_, err := tx.Exec(ctx, "UPDATE keys SET used = true WHERE key_value = $1", claimedKey)
@@ -50,7 +70,7 @@ func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			return 0, fmt.Errorf("failed to insert new key into db: %w", err)
+			return 0, err
 		}
 
 		inserted[key] = key
@@ -60,6 +80,53 @@ func (s *KeyStore) Insert(ctx context.Context, keys []string) (int, error) {
 	return len(inserted), nil
 }
 
-func (s *KeyStore) GetCacheSize(ctx context.Context) int64 {
-	return s.cache.GetSize(ctx)
+func (s *KeyStore) GenerateAndStoreKeys(ctx context.Context) error {
+	if !s.cache.ShouldRefillCache(ctx) {
+		return nil
+	}
+
+	rowsInserted := 0
+	for rowsInserted < keyBatchSize {
+		newKeys, err := generateKeys()
+		if err != nil {
+			return err
+		}
+
+		rows, err := s.Insert(ctx, newKeys)
+		if err != nil {
+			return fmt.Errorf("failed to insert newly generated keys: %w", err)
+		}
+
+		rowsInserted += rows
+	}
+
+	slog.Info("successfully generated keys!")
+	return nil
+}
+
+func generateKeys() ([]string, error) {
+	newKeys := make([]string, 0, keyBatchSize)
+	for range keyBatchSize {
+		key, err := randomString(keyLength)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate keys: %w", err)
+		}
+		newKeys = append(newKeys, key)
+	}
+
+	return set.New(newKeys...).ToSlice(), nil
+}
+
+func randomString(length int) (string, error) {
+	bytes := make([]byte, length)
+
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+
+	for i, b := range bytes {
+		bytes[i] = alphanumericChars[int(b)%len(alphanumericChars)]
+	}
+
+	return string(bytes), nil
 }

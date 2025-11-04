@@ -6,32 +6,31 @@ import (
 
 	"github.com/robfig/cron/v3"
 
-	"github.com/Marie20767/url-shortener/internal/keygenerator"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 )
 
 type Cron struct {
-	client       *cron.Cron
-	keyGenerator *keygenerator.KeyGenStore
-	schedule     string
+	client   *cron.Cron
+	keyStore *keys.KeyStore
+	schedule string
 }
 
 func New(store *keys.KeyStore, schedule string) *Cron {
 	return &Cron{
-		client:       cron.New(),
-		keyGenerator: keygenerator.New(store),
-		schedule:     schedule,
+		client:   cron.New(),
+		keyStore: store,
+		schedule: schedule,
 	}
 }
 
 func (c *Cron) Add(ctx context.Context) error {
-	if err := c.keyGenerator.Run(ctx); err != nil {
+	if err := c.keyStore.GenerateAndStoreKeys(ctx); err != nil {
 		return err
 	}
 
 	_, err := c.client.AddFunc(c.schedule, func() {
-		if cronErr := c.keyGenerator.Run(ctx); cronErr != nil {
-			slog.Error(cronErr.Error())
+		if keyErr := c.keyStore.GenerateAndStoreKeys(ctx); keyErr != nil {
+			slog.Error(keyErr.Error())
 		}
 	})
 	if err != nil {
