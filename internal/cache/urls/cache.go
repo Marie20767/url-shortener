@@ -39,7 +39,6 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool) {
 }
 
 func (c *Cache) Add(ctx context.Context, urlData *model.UrlData, currentTimestamp time.Time) {
-	// TODO: discuss edge case where you get a url from the db that is already expired
 	var expiry time.Duration
 	switch urlData.Expiry {
 	case nil:
@@ -47,9 +46,8 @@ func (c *Cache) Add(ctx context.Context, urlData *model.UrlData, currentTimestam
 	default:
 		expiry = currentTimestamp.Sub(*urlData.Expiry)
 	}
-
+	
 	err := c.client.Set(ctx, urlData.Key, urlData.Url, expiry).Err()
-
 	if err != nil {
 		slog.Error("failed to insert urls into cache: ", slog.Any("error", err))
 	}
