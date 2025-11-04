@@ -3,15 +3,23 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
 )
 
+var logLevelMap = map[string]slog.Level{
+	"debug": slog.LevelDebug,
+	"info":  slog.LevelInfo,
+	"warn":  slog.LevelWarn,
+	"error": slog.LevelError,
+}
+
 type Url struct {
-	DbUrl     string
-	DbName    string
-	CacheUrl  string
+	DbUrl    string
+	DbName   string
+	CacheUrl string
 }
 
 type Key struct {
@@ -21,10 +29,11 @@ type Key struct {
 }
 
 type cfg struct {
-	Port   string
-	Domain string
-	Key    *Key
-	Url    *Url
+	Port     string
+	Domain   string
+	Key      *Key
+	LogLevel slog.Level
+	Url      *Url
 }
 
 func ParseEnv() (*cfg, error) {
@@ -37,6 +46,7 @@ func ParseEnv() (*cfg, error) {
 		"KEY_CACHE_URL":     nil,
 		"KEY_CRON_SCHEDULE": nil,
 		"KEY_DB_URL":        nil,
+		"LOG_LEVEL":         nil,
 		"PORT":              nil,
 		"URL_CACHE_URL":     nil,
 		"URL_DB_NAME":       nil,
@@ -63,10 +73,11 @@ func ParseEnv() (*cfg, error) {
 	}
 
 	cfg := &cfg{
-		Key:    Key,
-		Url:    Url,
-		Port:   *envVars["PORT"],
-		Domain: *envVars["API_DOMAIN"],
+		Domain:   *envVars["API_DOMAIN"],
+		Key:      Key,
+		LogLevel: logLevelMap[*envVars["LOG_LEVEL"]],
+		Port:     *envVars["PORT"],
+		Url:      Url,
 	}
 
 	return cfg, nil
