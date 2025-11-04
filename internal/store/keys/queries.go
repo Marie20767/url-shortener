@@ -63,7 +63,7 @@ func (s *KeyStore) FreeUpUnusedKeys(ctx context.Context, keys []string) (int, er
 		batch.Queue("UPDATE keys SET used = false WHERE key_value = $1", key)
 	}
 	results := s.pool.SendBatch(ctx, batch)
-	defer results.Close()
+	defer results.Close() //nolint:errcheck
 
 	count := 0
 	for range keys {
