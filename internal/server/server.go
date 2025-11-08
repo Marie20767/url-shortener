@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -13,6 +14,8 @@ import (
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 )
+
+const serverTimeout = 10
 
 type customValidator struct {
 	validator *validator.Validate
@@ -51,8 +54,9 @@ func (s *Server) Start(port string) error {
 	return nil
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	err := s.echo.Shutdown(ctx)
+func (s *Server) Stop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), serverTimeout*time.Second)
+	defer cancel()
 
-	return err
+	return s.echo.Shutdown(ctx)
 }

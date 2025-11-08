@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
 	"github.com/Marie20767/url-shortener/internal/cron/model"
@@ -16,8 +15,6 @@ import (
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
-
-const serverTimeout = 10
 
 func main() {
 	if err := run(); err != nil {
@@ -99,9 +96,7 @@ func run() error {
 	<-stopUrlCtx.Done()
 	slog.Info("url cron jobs completed")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), serverTimeout*time.Second)
-	defer cancel()
-	if err := srv.Stop(shutdownCtx); err != nil {
+	if err := srv.Stop(); err != nil {
 		slog.Error("server shutdown error", slog.Any("error", err))
 	}
 
