@@ -62,7 +62,8 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 	return deletedKeys, nil
 }
 
-func (s *UrlStore) Get(ctx context.Context, key string, currentTimeStamp time.Time) (string, error) {
+func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
+	now := time.Now().UTC()
 	url, ok := s.cache.Get(ctx, key)
 	if ok {
 		return url, nil
@@ -71,7 +72,7 @@ func (s *UrlStore) Get(ctx context.Context, key string, currentTimeStamp time.Ti
 	filters := bson.M{
 		"key_value": key,
 		"$or": []bson.M{
-			{"expiry": bson.M{"$gte": time.Now().UTC()}},
+			{"expiry": bson.M{"$gte": now}},
 			{"expiry": bson.M{"$exists": false}},
 		},
 	}
@@ -86,7 +87,7 @@ func (s *UrlStore) Get(ctx context.Context, key string, currentTimeStamp time.Ti
 
 		return "", fmt.Errorf("failed to fetch url from db: %w", err)
 	}
-	s.cache.Add(ctx, res, currentTimeStamp)
+	s.cache.Add(ctx, res, now)
 
 	return res.Url, nil
 }

@@ -67,7 +67,6 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 }
 
 func (h *UrlHandler) GetLong(ctx echo.Context) error {
-	now := time.Now().UTC()
 	var param KeyParam
 	if err := ctx.Bind(&param); err != nil {
 		return err
@@ -77,7 +76,7 @@ func (h *UrlHandler) GetLong(ctx echo.Context) error {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key), now)
+	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key))
 	if err != nil {
 		if err == urls.ErrNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "url not found")
