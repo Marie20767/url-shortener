@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
 	"github.com/Marie20767/url-shortener/internal/cron/model"
 	urlcron "github.com/Marie20767/url-shortener/internal/cron/urls"
@@ -15,7 +17,6 @@ import (
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
-	"golang.org/x/sync/errgroup"
 )
 
 const serverTimeout = 10
@@ -74,7 +75,7 @@ func run() error {
 	srv := server.New(keyStore, urlStore, cfg.Domain, cfg.Port)
 
 	grp, grpCtx := errgroup.WithContext(ctx)
-	
+
 	grp.Go(srv.Start)
 
 	grp.Go(func() error {
