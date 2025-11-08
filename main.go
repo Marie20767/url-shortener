@@ -8,8 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
 	"github.com/Marie20767/url-shortener/internal/cron/model"
 	urlcron "github.com/Marie20767/url-shortener/internal/cron/urls"
@@ -72,20 +70,21 @@ func run() error {
 		return err
 	}
 
-	srv := server.New(keyStore, urlStore, cfg.Domain, cfg.Port)
+	serverErr := make(chan error, 1)
 
-	grp, grpCtx := errgroup.WithContext(ctx)
+	srv := server.New(keyStore, urlStore, cfg.Domain)
+	go func() {
+		if err := srv.Start(cfg.Port); err != nil {
+			serverErr <- err
+		}
+	}()
 
-	grp.Go(srv.Start)
-
-	grp.Go(func() error {
-		<-grpCtx.Done() // blocks until signal received (e.g. by ctrl+C or process killed) OR server startup error
+	// blocks until signal received (e.g. by ctrl+C or process killed) OR server startup error
+	select {
+	case <-ctx.Done():
 		slog.Info("shutdown signal received")
-		return nil
-	})
-
-	if err := grp.Wait(); err != nil {
-		slog.Error(err.Error())
+	case err := <-serverErr:
+		return err
 	}
 
 	// cancel cron contexts to prevent new jobs from starting

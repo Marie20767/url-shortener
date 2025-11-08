@@ -24,10 +24,9 @@ func (cv *customValidator) Validate(i any) error {
 
 type Server struct {
 	echo *echo.Echo
-	port string
 }
 
-func New(keyStore *keys.KeyStore, urlStore *urls.UrlStore, apiDomain, port string) *Server {
+func New(keyStore *keys.KeyStore, urlStore *urls.UrlStore, apiDomain string) *Server {
 	server := echo.New()
 	server.Validator = &customValidator{validator: validator.New()}
 	urlHandler := &handlers.UrlHandler{
@@ -42,8 +41,8 @@ func New(keyStore *keys.KeyStore, urlStore *urls.UrlStore, apiDomain, port strin
 	}
 }
 
-func (s *Server) Start() error {
-	err := s.echo.Start(":" + s.port)
+func (s *Server) Start(port string) error {
+	err := s.echo.Start(":" + port)
 	if err != nil && err != http.ErrServerClosed {
 		slog.Error("server error", slog.Any("error", err))
 		return err
