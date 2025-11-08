@@ -127,7 +127,7 @@ func (s *KeyStore) GenerateAndStoreKeys(ctx context.Context) error {
 func generateKeys() ([]string, error) {
 	newKeys := make([]string, 0, keyBatchSize)
 	for range keyBatchSize {
-		key, err := randomString(keyLength)
+		key, err := getRandomString(keyLength)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate keys: %w", err)
 		}
@@ -137,7 +137,7 @@ func generateKeys() ([]string, error) {
 	return set.New(newKeys...).ToSlice(), nil
 }
 
-func randomString(length int) (string, error) {
+func getRandomString(length int) (string, error) {
 	bytes := make([]byte, length)
 
 	if _, err := rand.Read(bytes); err != nil {

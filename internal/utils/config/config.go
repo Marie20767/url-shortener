@@ -17,22 +17,23 @@ var logLevelMap = map[string]slog.Level{
 }
 
 type Url struct {
+	CacheUrl string
+	CronSchedule string
 	DbUrl    string
 	DbName   string
-	CacheUrl string
 }
 
 type Key struct {
-	DbUrl        string
 	CacheUrl     string
 	CronSchedule string
+	DbUrl        string
 }
 
 type cfg struct {
-	Port     string
 	Domain   string
 	Key      *Key
 	LogLevel slog.Level
+	Port     string
 	Url      *Url
 }
 
@@ -49,6 +50,7 @@ func ParseEnv() (*cfg, error) {
 		"LOG_LEVEL":         nil,
 		"PORT":              nil,
 		"URL_CACHE_URL":     nil,
+		"URL_CRON_SCHEDULE":     nil,
 		"URL_DB_NAME":       nil,
 		"URL_DB_URL":        nil,
 	}
@@ -62,14 +64,15 @@ func ParseEnv() (*cfg, error) {
 	}
 
 	Key := &Key{
-		DbUrl:        *envVars["KEY_DB_URL"],
 		CacheUrl:     *envVars["KEY_CACHE_URL"],
 		CronSchedule: *envVars["KEY_CRON_SCHEDULE"],
+		DbUrl:        *envVars["KEY_DB_URL"],
 	}
 	Url := &Url{
-		DbUrl:    *envVars["URL_DB_URL"],
-		DbName:   *envVars["URL_DB_NAME"],
 		CacheUrl: *envVars["URL_CACHE_URL"],
+		CronSchedule: *envVars["URL_CRON_SCHEDULE"],
+		DbName:   *envVars["URL_DB_NAME"],
+		DbUrl:    *envVars["URL_DB_URL"],
 	}
 
 	cfg := &cfg{

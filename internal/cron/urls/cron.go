@@ -39,18 +39,23 @@ func (c *Cron) Add(ctx context.Context) error {
 
 func (c *Cron) cleanupExpiredUrls(ctx context.Context) {
 	deletedKeys, urlErr := c.urlStore.DeleteExpired(ctx)
-	if urlErr != nil {
-		// in future this could trigger an alert
+	switch {
+	case urlErr != nil:
 		slog.Error("failed to delete all expired urls from db", slog.Any("error", urlErr))
-	} else {
+	case len(deletedKeys) > 0:
 		slog.Debug("successfully deleted all expired urls", slog.Int("number", len(deletedKeys)))
+	default:
+		slog.Debug("no expired urls to delete")
 	}
 
 	freedUpKeyCount, keyErr := c.keyStore.FreeUpUnusedKeys(ctx, deletedKeys)
-	if keyErr != nil {
+	switch {
+	case keyErr != nil:
 		slog.Error("failed to free up all unused keys in db", slog.Any("error", urlErr))
-	} else {
+	case freedUpKeyCount > 0:
 		slog.Debug("successfully freed up all unused keys", slog.Int("number", freedUpKeyCount))
+	default:
+		slog.Debug("no keys to free up")
 	}
 }
 

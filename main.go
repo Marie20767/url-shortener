@@ -64,7 +64,7 @@ func run() error {
 		return err
 	}
 
-	urlCron := urlcron.New(urlStore, keyStore, cfg.Key.CronSchedule)
+	urlCron := urlcron.New(urlStore, keyStore, cfg.Url.CronSchedule)
 	cancelUrlCron, err := setupCron(urlCron)
 	defer cancelUrlCron()
 	if err != nil {
