@@ -17,7 +17,7 @@ type Cron struct {
 	urlStore *urls.UrlStore
 }
 
-func New(urlStore *urls.UrlStore, keyStore *keys.KeyStore, schedule string) *Cron {
+func New(keyStore *keys.KeyStore, urlStore *urls.UrlStore, schedule string) *Cron {
 	return &Cron{
 		client:   cron.New(),
 		keyStore: keyStore,

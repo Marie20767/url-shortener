@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +15,7 @@ import (
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
+	"golang.org/x/sync/errgroup"
 )
 
 const serverTimeout = 10
@@ -64,29 +64,34 @@ func run() error {
 		return err
 	}
 
-	urlCron := urlcron.New(urlStore, keyStore, cfg.Url.CronSchedule)
+	urlCron := urlcron.New(keyStore, urlStore, cfg.Url.CronSchedule)
 	cancelUrlCron, err := setupCron(urlCron)
 	defer cancelUrlCron()
 	if err != nil {
 		return err
 	}
 
-	s := server.New(keyStore, urlStore, cfg.Domain)
-	go func() {
-		if err := s.Start(cfg.Port); err != nil && err != http.ErrServerClosed {
-			slog.Error("server error", slog.Any("error", err))
-		}
-	}()
+	srv := server.New(keyStore, urlStore, cfg.Domain, cfg.Port)
 
-	// block until shutdown signal
-	<-ctx.Done()
-	slog.Info("shutdown signal received")
+	grp, grpCtx := errgroup.WithContext(ctx)
+	
+	grp.Go(srv.Start)
+
+	grp.Go(func() error {
+		<-grpCtx.Done() // blocks until signal received (e.g. by ctrl+C or process killed) OR server startup error
+		slog.Info("shutdown signal received")
+		return nil
+	})
+
+	if err := grp.Wait(); err != nil {
+		slog.Error(err.Error())
+	}
 
 	// cancel cron contexts to prevent new jobs from starting
 	cancelKeyCron()
 	cancelUrlCron()
 
-	stopKeyCtx := keyCron.Stop()
+	stopKeyCtx := keyCron.Stop() // returns a context that waits until existing jobs finish
 	<-stopKeyCtx.Done()
 	slog.Info("key cron jobs completed")
 
@@ -96,8 +101,7 @@ func run() error {
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), serverTimeout*time.Second)
 	defer cancel()
-
-	if err := s.Stop(shutdownCtx); err != nil {
+	if err := srv.Stop(shutdownCtx); err != nil {
 		slog.Error("server shutdown error", slog.Any("error", err))
 	}
 
