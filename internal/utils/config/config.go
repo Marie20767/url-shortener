@@ -72,7 +72,7 @@ func ParseEnv() (*cfg, error) {
 		DbName:   *envVars["URL_DB_NAME"],
 		CacheUrl: *envVars["URL_CACHE_URL"],
 	}
-	
+
 	logLevel, ok := logLevelMap[*envVars["LOG_LEVEL"]]
 	if !ok {
 		return nil, errors.New("log level not set")
