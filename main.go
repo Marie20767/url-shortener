@@ -71,9 +71,7 @@ func run() error {
 
 	srv := server.New(keyStore, urlStore, cfg.Domain)
 	go func() {
-		if err := srv.Start(cfg.Port); err != nil {
-			serverErr <- err
-		}
+		serverErr <- srv.Start(cfg.Port)
 	}()
 
 	// blocks until signal received (e.g. by ctrl+C or process killed) OR server startup error
@@ -88,7 +86,7 @@ func run() error {
 	cancelKeyCron()
 	cancelUrlCron()
 
-	stopKeyCtx := keyCron.Stop() // returns a context that waits until existing jobs finish
+	stopKeyCtx := keyCron.Stop() // returns a context that waits until existing cron jobs finish
 	<-stopKeyCtx.Done()
 	slog.Info("key cron jobs completed")
 
