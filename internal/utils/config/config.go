@@ -66,16 +66,22 @@ func ParseEnv() (*cfg, error) {
 		CacheUrl:     *envVars["KEY_CACHE_URL"],
 		CronSchedule: *envVars["KEY_CRON_SCHEDULE"],
 	}
+
 	Url := &Url{
 		DbUrl:    *envVars["URL_DB_URL"],
 		DbName:   *envVars["URL_DB_NAME"],
 		CacheUrl: *envVars["URL_CACHE_URL"],
 	}
+	
+	logLevel, ok := logLevelMap[*envVars["LOG_LEVEL"]]
+	if !ok {
+		return nil, errors.New("log level not set")
+	}
 
 	cfg := &cfg{
 		Domain:   *envVars["API_DOMAIN"],
 		Key:      Key,
-		LogLevel: logLevelMap[*envVars["LOG_LEVEL"]],
+		LogLevel: logLevel,
 		Port:     *envVars["PORT"],
 		Url:      Url,
 	}
