@@ -3,17 +3,23 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
+var logLevelMap = map[string]slog.Level{
+	"debug": slog.LevelDebug,
+	"info":  slog.LevelInfo,
+	"warn":  slog.LevelWarn,
+	"error": slog.LevelError,
+}
+
 type Url struct {
-	DbUrl     string
-	DbName    string
-	DbTimeout int
-	CacheUrl  string
+	DbUrl    string
+	DbName   string
+	CacheUrl string
 }
 
 type Key struct {
@@ -23,10 +29,11 @@ type Key struct {
 }
 
 type cfg struct {
-	Port   string
-	Domain string
-	Key    *Key
-	Url    *Url
+	Port     string
+	Domain   string
+	Key      *Key
+	LogLevel slog.Level
+	Url      *Url
 }
 
 func ParseEnv() (*cfg, error) {
@@ -39,10 +46,10 @@ func ParseEnv() (*cfg, error) {
 		"KEY_CACHE_URL":     nil,
 		"KEY_CRON_SCHEDULE": nil,
 		"KEY_DB_URL":        nil,
+		"LOG_LEVEL":         nil,
 		"PORT":              nil,
 		"URL_CACHE_URL":     nil,
 		"URL_DB_NAME":       nil,
-		"URL_DB_TIMEOUT":    nil,
 		"URL_DB_URL":        nil,
 	}
 
@@ -60,22 +67,23 @@ func ParseEnv() (*cfg, error) {
 		CronSchedule: *envVars["KEY_CRON_SCHEDULE"],
 	}
 
-	urlDbTimeout, err := strconv.Atoi(*envVars["URL_DB_TIMEOUT"])
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse all env vars: %w", err)
-	}
 	Url := &Url{
-		DbUrl:     *envVars["URL_DB_URL"],
-		DbName:    *envVars["URL_DB_NAME"],
-		DbTimeout: urlDbTimeout,
-		CacheUrl:  *envVars["URL_CACHE_URL"],
+		DbUrl:    *envVars["URL_DB_URL"],
+		DbName:   *envVars["URL_DB_NAME"],
+		CacheUrl: *envVars["URL_CACHE_URL"],
+	}
+
+	logLevel, ok := logLevelMap[*envVars["LOG_LEVEL"]]
+	if !ok {
+		return nil, errors.New("log level not set")
 	}
 
 	cfg := &cfg{
-		Key:    Key,
-		Url:    Url,
-		Port:   *envVars["PORT"],
-		Domain: *envVars["API_DOMAIN"],
+		Domain:   *envVars["API_DOMAIN"],
+		Key:      Key,
+		LogLevel: logLevel,
+		Port:     *envVars["PORT"],
+		Url:      Url,
 	}
 
 	return cfg, nil

@@ -1,4 +1,4 @@
-package keycache
+package cache
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 type Cache struct {
 	client *redis.Client
 }
+
+const cacheRefillThreshold = 10
 
 func New(cacheUrl string) (*Cache, error) {
 	opt, err := redis.ParseURL(cacheUrl)
@@ -64,15 +66,14 @@ func (c *Cache) Add(ctx context.Context, keyMap map[string]string) {
 }
 
 func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
-	cacheRefillThreshold := 10
 	currentCacheSize := c.getSize(ctx)
-	slog.Info("cache", "size", currentCacheSize)
+	slog.Debug("cache", "size", currentCacheSize)
 
 	if currentCacheSize < int64(cacheRefillThreshold) {
 		return true
 	}
 
-	slog.Info("enough keys in cache, skipped key generation")
+	slog.Debug("enough keys in cache, skipped key generation")
 	return false
 }
 

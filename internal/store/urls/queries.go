@@ -8,17 +8,18 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+
+	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 )
 
 var ErrNotFound = errors.New("url not found")
 
-type UrlData struct {
-	Key    string     `bson:"key_value"`
-	Url    string     `bson:"url"`
-	Expiry *time.Time `bson:"expiry,omitempty"`
-}
+func (s *UrlStore) Insert(ctx context.Context, urlData *model.UrlData) (any, error) {
+	if urlData.Expiry != nil {
+		utcTime := urlData.Expiry.UTC()
+		urlData.Expiry = &utcTime
+	}
 
-func (s *UrlStore) Insert(ctx context.Context, urlData *UrlData) (any, error) {
 	db := s.conn.Collection(s.collection)
 	res, err := db.InsertOne(ctx, urlData)
 	if err != nil {
@@ -42,15 +43,13 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 	db := s.conn.Collection(s.collection)
 	filter := bson.M{
 		"expiry": bson.M{
-			"$lte": time.Now(),
+			"$lte": time.Now().UTC(),
 		},
 	}
 
 	var deletedKeys []string
-
 	for {
-		var deleted UrlData
-
+		var deleted *model.UrlData
 		err := db.FindOneAndDelete(ctx, filter).Decode(&deleted)
 		if err == mongo.ErrNoDocuments {
 			break
@@ -64,14 +63,23 @@ func (s *UrlStore) DeleteExpired(ctx context.Context) ([]string, error) {
 }
 
 func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
+	now := time.Now().UTC()
 	url, ok := s.cache.Get(ctx, key)
 	if ok {
 		return url, nil
 	}
 
-	var res UrlData
+	filters := bson.M{
+		"key_value": key,
+		"$or": []bson.M{
+			{"expiry": bson.M{"$gte": now}},
+			{"expiry": bson.M{"$exists": false}},
+		},
+	}
+
+	var res *model.UrlData
 	db := s.conn.Collection(s.collection)
-	err := db.FindOne(ctx, bson.M{"key_value": key}).Decode(&res)
+	err := db.FindOne(ctx, filters).Decode(&res)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return "", ErrNotFound
@@ -79,7 +87,7 @@ func (s *UrlStore) Get(ctx context.Context, key string) (string, error) {
 
 		return "", fmt.Errorf("failed to fetch url from db: %w", err)
 	}
-	s.cache.Add(ctx, key, res.Url)
+	s.cache.Add(ctx, res, now)
 
 	return res.Url, nil
 }

@@ -1,11 +1,14 @@
-package urlcache
+package cache
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/redis/go-redis/v9"
+
+	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 )
 
 type Cache struct {
@@ -35,9 +38,16 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool) {
 	return url, true
 }
 
-func (c *Cache) Add(ctx context.Context, key, value string) {
-	// TODO: implement expiry
-	err := c.client.Set(ctx, key, value, 0).Err()
+func (c *Cache) Add(ctx context.Context, urlData *model.UrlData, currentTimestamp time.Time) {
+	var expiry time.Duration
+	switch urlData.Expiry {
+	case nil:
+		expiry = 0
+	default:
+		expiry = currentTimestamp.Sub(*urlData.Expiry)
+	}
+
+	err := c.client.Set(ctx, urlData.Key, urlData.Url, expiry).Err()
 	if err != nil {
 		slog.Error("failed to insert urls into cache: ", slog.Any("error", err))
 	}

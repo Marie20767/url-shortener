@@ -100,7 +100,7 @@ func (s *KeyStore) GenerateAndStoreKeys(ctx context.Context) error {
 		rowsInserted += rows
 	}
 
-	slog.Info("successfully generated keys!")
+	slog.Debug("successfully generated keys!")
 	return nil
 }
 

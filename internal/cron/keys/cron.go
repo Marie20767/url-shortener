@@ -1,4 +1,4 @@
-package keycron
+package cron
 
 import (
 	"context"
