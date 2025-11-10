@@ -7,9 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
-	"github.com/Marie20767/url-shortener/internal/cron/model"
-	urlcron "github.com/Marie20767/url-shortener/internal/cron/urls"
+	"github.com/Marie20767/url-shortener/internal/cron"
+	"github.com/Marie20767/url-shortener/internal/cron/jobs"
 	"github.com/Marie20767/url-shortener/internal/server"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
@@ -53,15 +52,15 @@ func run() error {
 	defer urlStore.Close(ctx) //nolint:errcheck
 	slog.Info("successfully connected to url db!")
 
-	keyCron := keycron.New(keyStore, cfg.Key.CronSchedule)
-	cancelKeyCron, err := setupCron(keyCron)
+	keyCron := cron.New(cfg.Key.CronSchedule, "key generation")
+	cancelKeyCron, err := keyCron.Setup(jobs.KeyGenerationJob(keyStore))
 	defer cancelKeyCron()
 	if err != nil {
 		return err
 	}
 
-	urlCron := urlcron.New(keyStore, urlStore, cfg.Url.CronSchedule)
-	cancelUrlCron, err := setupCron(urlCron)
+	urlCron := cron.New(cfg.Url.CronSchedule, "url cleanup")
+	cancelUrlCron, err := urlCron.Setup(jobs.UrlCleanUpJob(keyStore, urlStore))
 	defer cancelUrlCron()
 	if err != nil {
 		return err
@@ -99,16 +98,4 @@ func run() error {
 	}
 
 	return nil
-}
-
-func setupCron(cron model.CronLike) (context.CancelFunc, error) {
-	cronCtx, cancelCron := context.WithCancel(context.Background())
-
-	err := cron.Add(cronCtx)
-	if err != nil {
-		return cancelCron, err
-	}
-	cron.Start()
-
-	return cancelCron, nil
 }
