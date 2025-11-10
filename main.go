@@ -3,21 +3,18 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	keycron "github.com/Marie20767/url-shortener/internal/cron/keys"
 	"github.com/Marie20767/url-shortener/internal/cron/model"
+	urlcron "github.com/Marie20767/url-shortener/internal/cron/urls"
 	"github.com/Marie20767/url-shortener/internal/server"
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
-
-const serverTimeout = 10
 
 func main() {
 	if err := run(); err != nil {
@@ -63,28 +60,41 @@ func run() error {
 		return err
 	}
 
-	s := server.New(keyStore, urlStore, cfg.Domain)
+	urlCron := urlcron.New(keyStore, urlStore, cfg.Url.CronSchedule)
+	cancelUrlCron, err := setupCron(urlCron)
+	defer cancelUrlCron()
+	if err != nil {
+		return err
+	}
+
+	serverErr := make(chan error, 1)
+
+	srv := server.New(keyStore, urlStore, cfg.Domain)
 	go func() {
-		if err := s.Start(cfg.Port); err != nil && err != http.ErrServerClosed {
-			slog.Error("server error", slog.Any("error", err))
-		}
+		serverErr <- srv.Start(cfg.Port)
 	}()
 
-	// block until shutdown signal
-	<-ctx.Done()
-	slog.Info("shutdown signal received")
+	// blocks until signal received (e.g. by ctrl+C or process killed) OR server startup error
+	select {
+	case <-ctx.Done():
+		slog.Info("shutdown signal received")
+	case err := <-serverErr:
+		return err
+	}
 
 	// cancel cron contexts to prevent new jobs from starting
 	cancelKeyCron()
+	cancelUrlCron()
 
-	stopKeyCtx := keyCron.Stop()
+	stopKeyCtx := keyCron.Stop() // returns a context that waits until existing cron jobs finish
 	<-stopKeyCtx.Done()
 	slog.Info("key cron jobs completed")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), serverTimeout*time.Second)
-	defer cancel()
+	stopUrlCtx := urlCron.Stop()
+	<-stopUrlCtx.Done()
+	slog.Info("url cron jobs completed")
 
-	if err := s.Stop(shutdownCtx); err != nil {
+	if err := srv.Stop(); err != nil {
 		slog.Error("server shutdown error", slog.Any("error", err))
 	}
 
