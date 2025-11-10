@@ -30,11 +30,8 @@ func (c *Cron) Add(ctx context.Context) error {
 	_, err := c.client.AddFunc(c.schedule, func() {
 		c.cleanupExpiredUrls(ctx)
 	})
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func (c *Cron) cleanupExpiredUrls(ctx context.Context) {

@@ -33,11 +33,8 @@ func (c *Cron) Add(ctx context.Context) error {
 			slog.Error(keyErr.Error())
 		}
 	})
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func (c *Cron) Start() {
