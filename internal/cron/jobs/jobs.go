@@ -38,9 +38,9 @@ func cleanupUrls(urlStore *urls.UrlStore, ctx context.Context) []string {
 	return deletedKeys
 }
 
-func freeUpKeys(keyStore *keys.KeyStore, ctx context.Context, keys []string) {
-	freedUpKeyCount, err := keyStore.FreeUpUnusedKeys(ctx, keys)
-	
+func freeUpKeys(keyStore *keys.KeyStore, ctx context.Context, deletedKeys []string) {
+	freedUpKeyCount, err := keyStore.FreeUpUnusedKeys(ctx, deletedKeys)
+
 	switch {
 	case err != nil:
 		slog.Error("url-cleanup: failed to free up unused keys", slog.Any("error", err))
