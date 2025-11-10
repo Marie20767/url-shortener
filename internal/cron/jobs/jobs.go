@@ -21,21 +21,21 @@ func UrlCleanUpJob(keyStore *keys.KeyStore, urlStore *urls.UrlStore) func(ctx co
 		deletedKeys, urlErr := urlStore.DeleteExpired(ctx)
 		switch {
 		case urlErr != nil:
-			slog.Error("failed to delete all expired urls from db", slog.Any("error", urlErr))
+			slog.Error("url-cleanup: failed to delete urls", slog.Any("error", urlErr))
 		case len(deletedKeys) > 0:
-			slog.Debug("successfully deleted all expired urls", slog.Int("number", len(deletedKeys)))
+			slog.Debug("url-cleanup: successfully deleted urls", slog.Int("number", len(deletedKeys)))
 		default:
-			slog.Debug("no expired urls to delete")
+			slog.Debug("url-cleanup: no expired urls to delete")
 		}
 
 		freedUpKeyCount, keyErr := keyStore.FreeUpUnusedKeys(ctx, deletedKeys)
 		switch {
 		case keyErr != nil:
-			slog.Error("failed to free up all unused keys in db", slog.Any("error", urlErr))
+			slog.Error("url-cleanup: failed to free up unused keys", slog.Any("error", urlErr))
 		case freedUpKeyCount > 0:
-			slog.Debug("successfully freed up all unused keys", slog.Int("number", freedUpKeyCount))
+			slog.Debug("url-cleanup: successfully freed up unused keys", slog.Int("number", freedUpKeyCount))
 		default:
-			slog.Debug("no keys to free up")
+			slog.Debug("url-cleanup: no keys to free up")
 		}
 	}
 }

@@ -52,14 +52,14 @@ func run() error {
 	defer urlStore.Close(ctx) //nolint:errcheck
 	slog.Info("successfully connected to url db!")
 
-	keyCron := cron.New(cfg.Key.CronSchedule, "key generation")
+	keyCron := cron.New(cfg.Key.CronSchedule, "key-generation")
 	cancelKeyCron, err := keyCron.Setup(jobs.KeyGenerationJob(keyStore))
 	defer cancelKeyCron()
 	if err != nil {
 		return err
 	}
 
-	urlCron := cron.New(cfg.Url.CronSchedule, "url cleanup")
+	urlCron := cron.New(cfg.Url.CronSchedule, "url-cleanup")
 	cancelUrlCron, err := urlCron.Setup(jobs.UrlCleanUpJob(keyStore, urlStore))
 	defer cancelUrlCron()
 	if err != nil {

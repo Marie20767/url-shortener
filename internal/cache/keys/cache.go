@@ -73,7 +73,7 @@ func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
 		return true
 	}
 
-	slog.Debug("enough keys in cache, skipped key generation")
+	slog.Debug("key-generation: skipped key generation")
 	return false
 }
 
