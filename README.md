@@ -31,4 +31,8 @@
 ```make stop-db```
 
 #### Lint:
+- Run linter:
 ```make lint```
+
+- Fix issues:
+```make lint-fix```
