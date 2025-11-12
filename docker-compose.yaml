@@ -8,6 +8,7 @@ services:
       POSTGRES_DB: url_keys
     volumes:
       - ./internal/store/keys/schema/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
   mongo:
@@ -41,4 +42,6 @@ services:
       "--loglevel", "warning"
     ]
 
+volumes:
+  postgres_data:
  

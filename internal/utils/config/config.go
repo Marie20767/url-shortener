@@ -38,54 +38,54 @@ type cfg struct {
 }
 
 func ParseEnv() (*cfg, error) {
-	if err := godotenv.Load(); err != nil {
-		return nil, fmt.Errorf("failed to parse env vars: %w", err)
-	}
+		// ignore error because in production there will be no .env file
+		// env vars will be passed at runtime via docker run command/docker-compose
+	_ = godotenv.Load()
 
-	envVars := map[string]*string{
-		"API_DOMAIN":        nil,
-		"KEY_CACHE_URL":     nil,
-		"KEY_CRON_SCHEDULE": nil,
-		"KEY_DB_URL":        nil,
-		"LOG_LEVEL":         nil,
-		"PORT":              nil,
-		"URL_CACHE_URL":     nil,
-		"URL_CRON_SCHEDULE": nil,
-		"URL_DB_NAME":       nil,
-		"URL_DB_URL":        nil,
+	envVars := map[string]string{
+		"API_DOMAIN":        "",
+		"KEY_CACHE_URL":     "",
+		"KEY_CRON_SCHEDULE": "",
+		"KEY_DB_URL":        "",
+		"LOG_LEVEL":         "",
+		"PORT":              "",
+		"URL_CACHE_URL":     "",
+		"URL_CRON_SCHEDULE": "",
+		"URL_DB_NAME":       "",
+		"URL_DB_URL":        "",
 	}
 
 	for key := range envVars {
 		value := os.Getenv(key)
 		if value == "" {
-			return nil, errors.New("not all environment variables are set")
+			return nil, fmt.Errorf("%s environment variable not set", key)
 		}
-		envVars[key] = &value
+		envVars[key] = value
 	}
 
 	Key := &Key{
-		CacheUrl:     *envVars["KEY_CACHE_URL"],
-		CronSchedule: *envVars["KEY_CRON_SCHEDULE"],
-		DbUrl:        *envVars["KEY_DB_URL"],
+		CacheUrl:     envVars["KEY_CACHE_URL"],
+		CronSchedule: envVars["KEY_CRON_SCHEDULE"],
+		DbUrl:        envVars["KEY_DB_URL"],
 	}
 
 	Url := &Url{
-		CacheUrl:     *envVars["URL_CACHE_URL"],
-		CronSchedule: *envVars["URL_CRON_SCHEDULE"],
-		DbName:       *envVars["URL_DB_NAME"],
-		DbUrl:        *envVars["URL_DB_URL"],
+		CacheUrl:     envVars["URL_CACHE_URL"],
+		CronSchedule: envVars["URL_CRON_SCHEDULE"],
+		DbName:       envVars["URL_DB_NAME"],
+		DbUrl:        envVars["URL_DB_URL"],
 	}
 
-	logLevel, ok := logLevelMap[*envVars["LOG_LEVEL"]]
+	logLevel, ok := logLevelMap[envVars["LOG_LEVEL"]]
 	if !ok {
-		return nil, errors.New("log level not set")
+		return nil, errors.New("LOG_LEVEL should be one of debug|info|warning|error")
 	}
 
 	cfg := &cfg{
-		Domain:   *envVars["API_DOMAIN"],
+		Domain:   envVars["API_DOMAIN"],
 		Key:      Key,
 		LogLevel: logLevel,
-		Port:     *envVars["PORT"],
+		Port:     envVars["PORT"],
 		Url:      Url,
 	}
 
