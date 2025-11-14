@@ -71,19 +71,18 @@ Retrieves and redirects to the original long URL using the short URL key as a pa
 
 ### Run with docker:
 
-- Start the app:
-```docker-compose up -d```
+```docker compose up -d```
 
 ### Run without docker:
 
 - Start the app:
 ```make start```
 
-- Start the database (still run via docker):
-```make start-db```
+- Start databases (still run via docker):
+```make start-dbs```
 
-- Stop the database (still run via docker):
-```make stop-db```
+- Stop databases (still run via docker):
+```make stop-dbs```
 
 ### Lint:
 - Run linter:

@@ -39,7 +39,7 @@ type cfg struct {
 
 func ParseEnv() (*cfg, error) {
 	// ignore error because in production there will be no .env file
-	// env vars will be passed at runtime via docker run command/docker-compose
+	// env vars will be passed at runtime via docker run command/docker compose
 	_ = godotenv.Load()
 
 	envVars := map[string]string{
