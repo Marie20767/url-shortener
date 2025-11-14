@@ -17,11 +17,11 @@ stop-multiple:
 	@lsof -ti tcp:8082 | xargs kill -9 || true
 	@lsof -ti tcp:8083 | xargs kill -9 || true
 
-start-db:
-	docker-compose up -d
+start-dbs:
+	docker compose up -d postgres mongo url-cache key-cache
 
-stop-db:
-	docker-compose down
+stop-dbs:
+	docker compose down
 
 lint: lint-install lint-run
 
