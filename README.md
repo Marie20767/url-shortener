@@ -12,7 +12,7 @@
 
 ## API
 
-### Create short URL - POST
+### Create short URL - POST /create
 
 Creates a new short URL from a provided long URL.
 Accepts an optional expiry datetime. Returns the shortened URL containing a unique key.
