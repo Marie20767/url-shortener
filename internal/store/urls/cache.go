@@ -1,4 +1,4 @@
-package cache
+package urls
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type Cache struct {
 	client *redis.Client
 }
 
-func New(cacheUrl string) (*Cache, error) {
+func NewCache(cacheUrl string) (*Cache, error) {
 	opt, err := redis.ParseURL(cacheUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new url cache: %w", err)

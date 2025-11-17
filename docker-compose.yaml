@@ -1,34 +1,70 @@
 services:
-  postgres:
-    image: postgres
-    container_name: key_container
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: url-shortener-server
+    env_file:
+      - .env
+    ports:
+      - "${PORT}:${PORT}"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: url_keys
+      # Override KEY_DB_URL to use @postgres for the db host
+      KEY_DB_URL: postgres://${KEY_DB_USER}:${KEY_DB_PASSWORD}@postgres:${KEY_DB_PORT}/${KEY_DB_NAME}?sslmode=disable
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: key-db
+    env_file:
+      - .env
+    ports:
+      - "${KEY_DB_PORT}:5432"
+    restart: unless-stopped
     volumes:
       - ./internal/store/keys/schema/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KEY_DB_USER} -d ${KEY_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mongo:
-    image: mongo
-    container_name: url_container
+    image: mongo:7
+    container_name: url-db
+    env_file:
+      - .env
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mongo
-      MONGO_INITDB_ROOT_PASSWORD: mongo
+      MONGO_INITDB_ROOT_USERNAME: ${URL_DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${URL_DB_PASSWORD}
+      URL_DB_URL: mongodb://${URL_DB_USER}:${URL_DB_PASSWORD}@mongo:${URL_DB_PORT}/?authSource=admin
     ports:
-      - "27017:27017"
+      - "${URL_DB_PORT}:${URL_DB_PORT}"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' | grep 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   url-cache:
     image: redis:7.4
-    container_name: url_cache_container
+    container_name: url-cache
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${URL_CACHE_PORT}:${URL_CACHE_PORT}"
     command:  [
       "redis-server",
       "--maxmemory", "512mb",         
@@ -37,19 +73,29 @@ services:
     ]
     volumes:
       - url_cache_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   key-cache:
     image: redis:7.4
-    container_name: key_cache_container
+    container_name: key-cache
     restart: unless-stopped
     ports:
-      - "6380:6379"
+      - "{KEY_CACHE_PORT}:6379"
     command:  [
       "redis-server",
       "--loglevel", "warning"
     ]
     volumes:
       - key_cache_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

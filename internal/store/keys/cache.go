@@ -1,4 +1,4 @@
-package cache
+package keys
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type Cache struct {
 
 const cacheRefillThreshold = 10
 
-func New(cacheUrl string) (*Cache, error) {
+func NewCache(cacheUrl string) (*Cache, error) {
 	opt, err := redis.ParseURL(cacheUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new key cache: %w", err)
@@ -85,4 +85,8 @@ func (c *Cache) getSize(ctx context.Context) int64 {
 	}
 
 	return keysCount
+}
+
+func (c *Cache) Ping(ctx context.Context) error {
+	return c.client.Ping(ctx).Err()
 }
