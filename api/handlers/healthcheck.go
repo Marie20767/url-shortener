@@ -29,8 +29,8 @@ func (h *Handler) HealthCheck(e echo.Context) error {
 
 	return e.JSON(http.StatusOK, map[string]string{
 		"status": "ok",
-		"keydb":  keyStoreStatus,
-		"urldb":  urlStoreStatus,
+		"key_db": keyStoreStatus,
+		"url_db": urlStoreStatus,
 		"cache":  cacheStatus,
 	})
 }

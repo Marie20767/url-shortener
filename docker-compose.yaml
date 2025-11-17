@@ -5,12 +5,9 @@ services:
       dockerfile: Dockerfile
     container_name: url-shortener-server
     env_file:
-      - .env
+      - .env.docker
     ports:
       - "${PORT}:${PORT}"
-    environment:
-      # Override KEY_DB_URL to use @postgres for the db host
-      KEY_DB_URL: postgres://${KEY_DB_USER}:${KEY_DB_PASSWORD}@postgres:${KEY_DB_PORT}/${KEY_DB_NAME}?sslmode=disable
     restart: unless-stopped
     depends_on:
       postgres:
@@ -26,7 +23,7 @@ services:
     image: postgres:18-alpine
     container_name: key-db
     env_file:
-      - .env
+      - .env.docker
     environment:
       POSTGRES_USER: ${KEY_DB_USER}
       POSTGRES_PASSWORD: ${KEY_DB_PASSWORD}
@@ -47,7 +44,7 @@ services:
     image: mongo:7
     container_name: url-db
     env_file:
-      - .env
+      - .env.docker
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${URL_DB_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${URL_DB_PASSWORD}
@@ -71,14 +68,15 @@ services:
       - "${URL_CACHE_PORT}:${URL_CACHE_PORT}"
     command:  [
       "redis-server",
-      "--maxmemory", "512mb",         
+      "--port", "${URL_CACHE_PORT}",
+      "--maxmemory", "512mb",
       "--maxmemory-policy", "allkeys-lru",
       "--loglevel", "warning"
     ]
     volumes:
       - url_cache_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-p", "${URL_CACHE_PORT}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -88,15 +86,16 @@ services:
     container_name: key-cache
     restart: unless-stopped
     ports:
-      - "${KEY_CACHE_PORT}:6379"
-    command:  [
+      - "${KEY_CACHE_PORT}:${KEY_CACHE_PORT}"
+    command: [
       "redis-server",
+      "--port", "${KEY_CACHE_PORT}",
       "--loglevel", "warning"
     ]
     volumes:
       - key_cache_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-p", "${KEY_CACHE_PORT}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
