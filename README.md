@@ -20,7 +20,6 @@ Accepts an optional expiry datetime. Returns the shortened URL containing a uniq
 #### <u>Request</u>
 
 Body schema
-
   ```
   {
     "url": "string",                          // Required. Full URL to shorten.
@@ -39,7 +38,6 @@ Example
 #### <u>Response</u>
 
 Body schema
-
   ```
   {
     "url": "string" // The generated short URL
@@ -59,34 +57,41 @@ Retrieves and redirects to the original long URL using the short URL key as a pa
 
 #### <u>Request</u>
 
-  ```
-  GET https://minurl.com/j1ll5xx8
-  ```
+  `GET https://minurl.com/j1ll5xx8`
 
 ## Development
 
 ### Setup
 
-```make dep```
+`make dep`
 
 ### Run with docker:
 
-```docker compose up -d```
+`docker compose up -d`
 
 ### Run without docker:
 
 - Start the app:
-```make start```
+`make start`
 
 - Start databases (still run via docker):
-```make start-dbs```
+`make start-dbs`
 
 - Stop databases (still run via docker):
-```make stop-dbs```
+`make stop-dbs`
 
 ### Lint:
 - Run linter:
-```make lint```
+`make lint`
 
 - Fix issues:
-```make lint-fix```
+`make lint-fix`
+
+## Deployment
+
+Before deploying, add the following secrets to your GitHub repository:
+
+- `DOCKER_USER` – your Docker Hub username
+- `DOCKER_PASSWORD` – your Docker Hub password
+
+These secrets are required by the release workflow to push your application’s Docker image to Docker Hub.

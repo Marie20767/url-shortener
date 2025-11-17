@@ -44,12 +44,9 @@ build:
 	GOARCH=amd64 \
 	go build -o url-shortener-server .
 
-docker/local-build:
-	DOCKER_BUILDKIT=1 docker buildx build \
-	-t $(DOCKER_USER)/$(IMAGE_NAME):local .
-
-docker/ci-build:
+docker/build-and-push:
 	DOCKER_BUILDKIT=1 docker buildx build \
 	--platform linux/amd64 \
+	--push \
 	-t $(DOCKER_USER)/$(IMAGE_NAME):latest \
 	-t $(DOCKER_USER)/$(IMAGE_NAME):$(GIT_HASH) .
