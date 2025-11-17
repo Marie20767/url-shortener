@@ -1,8 +1,6 @@
 services:
   server:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: marie20767/url-shortener-server:latest
     container_name: url-shortener-server
     env_file:
       - .env.docker

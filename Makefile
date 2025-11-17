@@ -1,3 +1,7 @@
+GIT_HASH := $(shell git rev-parse --short HEAD)
+DOCKER_USER := marie20767
+IMAGE_NAME := url-shortener-server
+
 dep:
 	go mod download
 
@@ -33,3 +37,16 @@ lint-run:
 
 lint-fix:
 	bin/golangci-lint run --config .golangci.yaml --fix
+
+build:
+	CGO_ENABLED=0 \
+	GOOS=linux \
+	GOARCH=amd64 \
+	go build -o url-shortener-server .
+
+docker/build-and-push:
+	DOCKER_BUILDKIT=1 docker buildx build \
+	--platform linux/amd64 \
+	--push \
+	-t $(DOCKER_USER)/$(IMAGE_NAME):latest \
+	-t $(DOCKER_USER)/$(IMAGE_NAME):$(GIT_HASH) .

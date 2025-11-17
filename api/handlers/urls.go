@@ -8,16 +8,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 )
-
-type UrlHandler struct {
-	UrlStore  *urls.UrlStore
-	KeyStore  *keys.KeyStore
-	ApiDomain string
-}
 
 type UrlData struct {
 	Url    string     `json:"url" validate:"required,url"`
@@ -28,7 +21,7 @@ type KeyParam struct {
 	Key string `param:"key" validate:"required,alphanum,len=8"`
 }
 
-func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
+func (h *Handler) CreateShort(echoCtx echo.Context) error {
 	ctx := echoCtx.Request().Context()
 
 	var req UrlData
@@ -66,7 +59,7 @@ func (h *UrlHandler) CreateShort(echoCtx echo.Context) error {
 	})
 }
 
-func (h *UrlHandler) GetLong(ctx echo.Context) error {
+func (h *Handler) GetLong(ctx echo.Context) error {
 	var param KeyParam
 	if err := ctx.Bind(&param); err != nil {
 		return err
