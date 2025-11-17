@@ -27,6 +27,10 @@ services:
     container_name: key-db
     env_file:
       - .env
+    environment:
+      POSTGRES_USER: ${KEY_DB_USER}
+      POSTGRES_PASSWORD: ${KEY_DB_PASSWORD}
+      POSTGRES_DB: ${KEY_DB_NAME}
     ports:
       - "${KEY_DB_PORT}:5432"
     restart: unless-stopped
@@ -53,7 +57,7 @@ services:
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' | grep 1"]
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' --quiet || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -84,7 +88,7 @@ services:
     container_name: key-cache
     restart: unless-stopped
     ports:
-      - "{KEY_CACHE_PORT}:6379"
+      - "${KEY_CACHE_PORT}:6379"
     command:  [
       "redis-server",
       "--loglevel", "warning"

@@ -22,8 +22,8 @@ RUN addgroup -g 1000 -S appgroup && adduser -u 1000 -S appuser -G appgroup
 RUN mkdir /app && chown appuser:appgroup /app
 WORKDIR /app
 
-COPY --from=builder /app/supanova-server /app/supanova-server
+COPY --from=builder /app/url-shortener-server /app/url-shortener-server
 
 USER appuser
 
-ENTRYPOINT ["/app/url-shortener"]
+ENTRYPOINT ["/app/url-shortener-server"]
