@@ -46,7 +46,7 @@ Body schema
 Example
   ```
   {
-    "url": "https://minurl.com/j1ll5xx8"
+    "url": "https://${API_DOMAIN}/j1ll5xx8"
   }
   ```
 
@@ -55,7 +55,7 @@ Retrieves and redirects to the original long URL using the short URL key as a pa
 
 #### <u>Request</u>
 
-  `GET https://minurl.com/j1ll5xx8`
+  `GET https://${API_DOMAIN}/j1ll5xx8`
 
 ## Development
 
