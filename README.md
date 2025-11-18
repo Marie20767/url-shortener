@@ -13,7 +13,6 @@
 ## API
 
 ### Create short URL - POST /create
-
 Creates a new short URL from a provided long URL.
 Accepts an optional expiry datetime. Returns the shortened URL containing a unique key.
 
@@ -52,7 +51,6 @@ Example
   ```
 
 ### Resolve original URL - GET/{key}
-
 Retrieves and redirects to the original long URL using the short URL key as a path parameter.
 
 #### <u>Request</u>
@@ -63,13 +61,22 @@ Retrieves and redirects to the original long URL using the short URL key as a pa
 
 ### Setup
 
-`make dep`
+#### 1. Install dependencies:
+```make dep```
 
-### Run with docker:
+#### 2. Set up environment files:
+Create the following env files (you can use `.env.example` as a reference for the required variables):
+- `.env` - your default local environment variables
+- `.env.docker` - overrides for Docker (e.g. using @postgres as the DB host instead of localhost)
+- `prod/.env` - production environment variables
+
+### Run the app
+
+#### 1. With docker:
 
 `docker compose up -d`
 
-### Run without docker:
+#### 2. Without docker:
 
 - Start the app:
 `make start`
@@ -80,7 +87,7 @@ Retrieves and redirects to the original long URL using the short URL key as a pa
 - Stop databases (still run via docker):
 `make stop-dbs`
 
-### Lint:
+### Lint
 - Run linter:
 `make lint`
 
@@ -94,4 +101,4 @@ Before deploying, add the following secrets to your GitHub repository:
 - `DOCKER_USER` – your Docker Hub username
 - `DOCKER_PASSWORD` – your Docker Hub password
 
-These secrets are required by the release workflow to push your application’s Docker image to Docker Hub.
+These secrets are required by the release workflow to push your application’s Docker image to Docker Hub.``

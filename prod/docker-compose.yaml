@@ -3,7 +3,7 @@ services:
     image: marie20767/url-shortener-server:latest
     container_name: url-shortener-server
     env_file:
-      - .env.docker
+      - .env
     ports:
       - "${PORT}:${PORT}"
     restart: unless-stopped
@@ -21,7 +21,7 @@ services:
     image: postgres:18-alpine
     container_name: key-db
     env_file:
-      - .env.docker
+      - .env
     environment:
       POSTGRES_USER: ${KEY_DB_USER}
       POSTGRES_PASSWORD: ${KEY_DB_PASSWORD}
@@ -42,7 +42,7 @@ services:
     image: mongo:7
     container_name: url-db
     env_file:
-      - .env.docker
+      - .env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${URL_DB_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${URL_DB_PASSWORD}
