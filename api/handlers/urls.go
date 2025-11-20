@@ -54,7 +54,7 @@ func (h *Handler) CreateShort(echoCtx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction")
 	}
 
-	return echoCtx.JSON(http.StatusOK, map[string]string{
+	return echoCtx.JSON(http.StatusCreated, map[string]string{
 		"url": fmt.Sprintf("%s/%s", h.ApiDomain, key),
 	})
 }

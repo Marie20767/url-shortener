@@ -87,6 +87,10 @@ Create the following env files (you can use `.env.example` as a reference for th
 - Stop databases (still run via docker):
 `make stop-dbs`
 
+### Test
+
+`make test`
+
 ### Lint
 - Run linter:
 `make lint`

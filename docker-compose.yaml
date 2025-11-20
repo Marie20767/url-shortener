@@ -7,13 +7,19 @@ services:
     env_file:
       - .env.docker
     ports:
-      - "${PORT}:${PORT}"
+      - "${SERVER_PORT}:${SERVER_PORT}"
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+      mongo:
+        condition: service_healthy
+      url-cache:
+        condition: service_healthy
+      key-cache:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -51,6 +57,7 @@ services:
       URL_DB_URL: mongodb://${URL_DB_USER}:${URL_DB_PASSWORD}@mongo:${URL_DB_PORT}/?authSource=admin
     ports:
       - "${URL_DB_PORT}:${URL_DB_PORT}"
+    restart: unless-stopped
     volumes:
       - mongo_data:/data/db
     healthcheck:
