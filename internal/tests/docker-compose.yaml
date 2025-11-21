@@ -71,13 +71,12 @@ services:
       - "5435:6379"
     command:  [
       "redis-server",
-      "--port", "5435",
       "--maxmemory", "512mb",
       "--maxmemory-policy", "allkeys-lru",
       "--loglevel", "warning"
     ]
     healthcheck:
-      test: ["CMD", "redis-cli", "-p", "5435", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -87,14 +86,13 @@ services:
     container_name: key-cache-test
     restart: unless-stopped
     ports:
-      - "5436:6380"
+      - "5436:6379"
     command: [
       "redis-server",
-      "--port", "5436",
       "--loglevel", "warning"
     ]
     healthcheck:
-      test: ["CMD", "redis-cli", "-p", "5436", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
