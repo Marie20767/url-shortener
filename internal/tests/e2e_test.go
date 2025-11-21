@@ -48,41 +48,57 @@ func TestIntegration(t *testing.T) {
 		}
 		defer rows.Close()
 
-		resp := createShortUrl(t, testResources.AppUrl, longUrl)
-		defer resp.Body.Close() //nolint:errcheck
+		createResp := createShortUrl(t, testResources.AppUrl, longUrl)
+		defer createResp.Body.Close() //nolint:errcheck
 
-		if resp.StatusCode != http.StatusCreated {
-			t.Fatalf("expected status 201, got %d", resp.StatusCode)
+		if createResp.StatusCode != http.StatusCreated {
+			t.Fatalf("expected status 201, got %d", createResp.StatusCode)
 		}
 
-		body, err := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(createResp.Body)
 		if err != nil {
 			t.Fatalf("failed to read POST /create response body: %v", err)
 		}
 
-		var res CreateResponse
-		err = json.Unmarshal(body, &res)
+		var createRes CreateResponse
+		err = json.Unmarshal(body, &createRes)
 		if err != nil {
 			t.Fatalf("failed to parse POST /create JSON response: %v. Body: %s", err, string(body))
 		}
 
 		expectedUrl := fmt.Sprintf("%s/%s", apiDomain, newKey)
-		if res.Url != expectedUrl {
-			t.Errorf("expected url '%s', got '%s'", expectedUrl, res.Url)
+		if createRes.Url != expectedUrl {
+			t.Errorf("expected url '%s', got '%s'", expectedUrl, createRes.Url)
 		}
 
-		// TODO: make a GET /{$key} request with the key and check you get a 302 redirect to the longURL
+		getResp := getLongUrl(t, testResources.AppUrl, newKey)
+		if getResp.StatusCode != http.StatusMovedPermanently {
+			t.Fatalf("expected 301 redirect, got %d", getResp.StatusCode)
+		}
+
+		location := getResp.Header.Get("Location")
+		if location != longUrl {
+			t.Fatalf("expected redirect to %s, got %s", longUrl, location)
+		}
 	})
 
-	// t.Run("returns url not found error", func(t *testing.T) {
+	t.Run("returns url not found error", func(t *testing.T) {
+		nonExistentKey := "1234bcde"
+		resp := getLongUrl(t, testResources.AppUrl, nonExistentKey)
 
-	// 	resp := getLongUrl(t, testResources.AppUrl, nonExistentID)
-	// 	defer resp.Body.Close() //nolint:errcheck
+		if resp.StatusCode != http.StatusNotFound {
+			t.Fatalf("expected status 404, got %d", resp.StatusCode)
+		}
+	})
 
-	// 	if resp.StatusCode != http.StatusNotFound {
-	// 		t.Fatalf("expected status 404, got %d", resp.StatusCode)
-	// 	}
-	// })
+	t.Run("returns validation error with invalid key", func(t *testing.T) {
+		invalidKey := "1234bcd"
+		resp := getLongUrl(t, testResources.AppUrl, invalidKey)
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", resp.StatusCode)
+		}
+	})
 }
 
 func createShortUrl(t *testing.T, baseUrl string, longUrl string) *http.Response {
@@ -113,6 +129,25 @@ func createShortUrl(t *testing.T, baseUrl string, longUrl string) *http.Response
 	if err != nil {
 		t.Fatalf("failed to make POST /create request: %v", err)
 	}
+
+	return resp
+}
+
+func getLongUrl(t *testing.T, baseUrl string, key string) *http.Response {
+	t.Helper()
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// stop following redirects
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Get(fmt.Sprintf("%s/%s", baseUrl, key))
+	if err != nil {
+		t.Fatalf("failed to make GET /%s request: %v", key, err)
+	}
+	defer resp.Body.Close()
 
 	return resp
 }
