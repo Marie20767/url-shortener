@@ -6,11 +6,13 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go/modules/compose"
 )
 
 type TestResources struct {
 	ComposeStack *compose.DockerCompose
+	KeyDbPool    *pgxpool.Pool
 	AppUrl       string
 }
 
@@ -39,9 +41,24 @@ func setupTestResources(ctx context.Context, t *testing.T) (*TestResources, erro
 		return nil, err
 	}
 
+	keyDbUrl, err := getKeyDbUrl(ctx, composeStack)
+	if err != nil {
+		return nil, err
+	}
+
+	keyDbPool, err := pgxpool.New(ctx, keyDbUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new key db pool: %w", err)
+	}
+
+	if err := keyDbPool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to connect to key db: %w", err)
+	}
+
 	return &TestResources{
 		ComposeStack: composeStack,
 		AppUrl:       appUrl,
+		KeyDbPool:    keyDbPool,
 	}, nil
 }
 
@@ -50,12 +67,39 @@ func (tr *TestResources) Cleanup(ctx context.Context, t *testing.T) {
 		return
 	}
 
+	if tr.KeyDbPool != nil {
+		tr.KeyDbPool.Close()
+	}
+
 	if tr.ComposeStack != nil {
 		err := tr.ComposeStack.Down(ctx, compose.RemoveOrphans(true), compose.RemoveImagesLocal)
 		if err != nil {
 			t.Logf("failed to tear down compose stack: %v", err)
 		}
 	}
+}
+
+func getKeyDbUrl(ctx context.Context, composeStack *compose.DockerCompose) (string, error) {
+	keyDbContainer, err := composeStack.ServiceContainer(ctx, "postgres")
+	if err != nil {
+		return "", fmt.Errorf("failed to get key db container: %w", err)
+	}
+
+	keyDbPort, err := keyDbContainer.MappedPort(ctx, "5432")
+	if err != nil {
+		return "", fmt.Errorf("failed to get key db mapped port: %w", err)
+	}
+
+	keyDbHost, err := keyDbContainer.Host(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get key db host: %w", err)
+	}
+
+	return fmt.Sprintf(
+		"postgres://testuser:password@%s:%s/keydb?sslmode=disable",
+		keyDbHost,
+		keyDbPort.Port(),
+	), nil
 }
 
 func getAppUrl(ctx context.Context, composeStack *compose.DockerCompose) (string, error) {

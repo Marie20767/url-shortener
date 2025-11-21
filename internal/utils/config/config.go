@@ -48,7 +48,7 @@ func ParseEnv() (*cfg, error) {
 		"KEY_CRON_SCHEDULE": "",
 		"KEY_DB_URL":        "",
 		"LOG_LEVEL":         "",
-		"SERVER_PORT":              "",
+		"SERVER_PORT":       "",
 		"URL_CACHE_URL":     "",
 		"URL_CRON_SCHEDULE": "",
 		"URL_DB_NAME":       "",

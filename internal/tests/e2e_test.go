@@ -1,13 +1,25 @@
 package tests
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"testing"
+
+	"github.com/joho/godotenv"
 )
 
+type CreateResponse struct {
+	Url string `json:"url"`
+}
+
 func TestIntegration(t *testing.T) {
+	_ = godotenv.Load(".env.test")
 	ctx := context.Background()
 
 	testResources, err := setupTestResources(ctx, t)
@@ -21,46 +33,48 @@ func TestIntegration(t *testing.T) {
 		testResources.Cleanup(ctx, t)
 	})
 
-	t.Run("redirects to long url by key", func(t *testing.T) {
-		// longUrl := "https://myveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongurl.com"
-		
-		// TODO: insert 1 key into key db
-		// TODO: make a POST /create request and check you get a 201 with the correct shortURL
+	t.Run("redirects to original url by short url", func(t *testing.T) {
+		apiDomain := os.Getenv("API_DOMAIN")
+		newKey := "abcde123"
+		longUrl := "https://myveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongurl.com"
+
+		rows, err := testResources.KeyDbPool.Query(
+			ctx,
+			`INSERT INTO keys (key_value) VALUES ($1)`,
+			newKey,
+		)
+		if err != nil {
+			t.Fatalf("failed to insert new key: %v", err)
+		}
+		defer rows.Close()
+
+		resp := createShortUrl(t, testResources.AppUrl, longUrl)
+		defer resp.Body.Close() //nolint:errcheck
+
+		if resp.StatusCode != http.StatusCreated {
+			t.Fatalf("expected status 201, got %d", resp.StatusCode)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("failed to read POST /create response body: %v", err)
+		}
+
+		var res CreateResponse
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			t.Fatalf("failed to parse POST /create JSON response: %v. Body: %s", err, string(body))
+		}
+
+		expectedUrl := fmt.Sprintf("%s/%s", apiDomain, newKey)
+		if res.Url != expectedUrl {
+			t.Errorf("expected url '%s', got '%s'", expectedUrl, res.Url)
+		}
+
 		// TODO: make a GET /{$key} request with the key and check you get a 302 redirect to the longURL
-
-		// resp := getCourse(t, testResources.AppUrl, id)
-		// defer resp.Body.Close() //nolint:errcheck
-
-		// if resp.StatusCode != http.StatusOK {
-		// 	t.Fatalf("expected status 200, got %d", resp.StatusCode)
-		// }
-
-		// body, err := io.ReadAll(resp.Body)
-		// if err != nil {
-		// 	t.Fatalf("failed to read response body: %v", err)
-		// }
-
-		// var result sqlc.Course
-		// err = json.Unmarshal(body, &result)
-		// if err != nil {
-		// 	t.Fatalf("failed to parse JSON response: %v. Body: %s", err, string(body))
-		// }
-
-		// if result.Title.String != expectedTitle {
-		// 	t.Errorf("expected title '%s', got '%s'", expectedTitle, result.Title.String)
-		// }
-
-		// if result.Description.String != expectedDescription {
-		// 	t.Errorf("expected description '%s', got '%s'", expectedDescription, result.Description.String)
-		// }
-
-		// if result.ID.String() != id.String() {
-		// 	t.Errorf("expected id '%s', got '%s'", id.String(), result.ID)
-		// }
 	})
 
-	// t.Run("returns not found error", func(t *testing.T) {
-	// 	nonExistentID := uuid.New()
+	// t.Run("returns url not found error", func(t *testing.T) {
 
 	// 	resp := getLongUrl(t, testResources.AppUrl, nonExistentID)
 	// 	defer resp.Body.Close() //nolint:errcheck
@@ -69,4 +83,36 @@ func TestIntegration(t *testing.T) {
 	// 		t.Fatalf("expected status 404, got %d", resp.StatusCode)
 	// 	}
 	// })
+}
+
+func createShortUrl(t *testing.T, baseUrl string, longUrl string) *http.Response {
+	t.Helper()
+
+	urlString := fmt.Sprintf("%s/create", baseUrl)
+	parsedUrl, err := url.Parse(urlString)
+	if err != nil {
+		t.Fatalf("failed to parse POST /create url: %v", err)
+	}
+
+	b, err := json.Marshal(map[string]string{
+		"url": longUrl,
+	})
+	if err != nil {
+		t.Fatalf("failed to parse POST /create request body: %v", err)
+	}
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, parsedUrl.String(), bytes.NewBuffer(b))
+	if err != nil {
+		t.Fatalf("failed to create POST /create request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("failed to make POST /create request: %v", err)
+	}
+
+	return resp
 }
