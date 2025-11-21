@@ -72,6 +72,7 @@ func TestIntegration(t *testing.T) {
 		}
 
 		getResp := getLongUrl(t, testResources.AppUrl, newKey)
+		defer getResp.Body.Close() //nolint:errcheck
 		if getResp.StatusCode != http.StatusMovedPermanently {
 			t.Fatalf("expected 301 redirect, got %d", getResp.StatusCode)
 		}
@@ -85,6 +86,7 @@ func TestIntegration(t *testing.T) {
 	t.Run("returns url not found error", func(t *testing.T) {
 		nonExistentKey := "1234bcde"
 		resp := getLongUrl(t, testResources.AppUrl, nonExistentKey)
+		defer resp.Body.Close() //nolint:errcheck
 
 		if resp.StatusCode != http.StatusNotFound {
 			t.Fatalf("expected status 404, got %d", resp.StatusCode)
@@ -94,6 +96,7 @@ func TestIntegration(t *testing.T) {
 	t.Run("returns validation error with invalid key", func(t *testing.T) {
 		invalidKey := "1234bcd"
 		resp := getLongUrl(t, testResources.AppUrl, invalidKey)
+		defer resp.Body.Close() //nolint:errcheck
 
 		if resp.StatusCode != http.StatusBadRequest {
 			t.Fatalf("expected status 400, got %d", resp.StatusCode)
@@ -101,7 +104,7 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
-func createShortUrl(t *testing.T, baseUrl string, longUrl string) *http.Response {
+func createShortUrl(t *testing.T, baseUrl, longUrl string) *http.Response {
 	t.Helper()
 
 	urlString := fmt.Sprintf("%s/create", baseUrl)
@@ -133,8 +136,19 @@ func createShortUrl(t *testing.T, baseUrl string, longUrl string) *http.Response
 	return resp
 }
 
-func getLongUrl(t *testing.T, baseUrl string, key string) *http.Response {
+func getLongUrl(t *testing.T, baseUrl, key string) *http.Response {
 	t.Helper()
+
+	urlString := fmt.Sprintf("%s/%s", baseUrl, key)
+	parsedUrl, err := url.Parse(urlString)
+	if err != nil {
+		t.Fatalf("failed to parse GET /%s url: %v", key, err)
+	}
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, parsedUrl.String(), http.NoBody)
+	if err != nil {
+		t.Fatalf("failed to create GET /%s request: %v", key, err)
+	}
 
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -143,11 +157,10 @@ func getLongUrl(t *testing.T, baseUrl string, key string) *http.Response {
 		},
 	}
 
-	resp, err := client.Get(fmt.Sprintf("%s/%s", baseUrl, key))
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("failed to make GET /%s request: %v", key, err)
 	}
-	defer resp.Body.Close()
 
 	return resp
 }
