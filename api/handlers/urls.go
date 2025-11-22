@@ -21,15 +21,15 @@ type KeyParam struct {
 	Key string `param:"key" validate:"required,alphanum,len=8"`
 }
 
-func (h *Handler) CreateShort(echoCtx echo.Context) error {
-	ctx := echoCtx.Request().Context()
+func (h *Handler) CreateShort(e echo.Context) error {
+	ctx := e.Request().Context()
 
 	var req UrlData
-	if err := echoCtx.Bind(&req); err != nil {
+	if err := e.Bind(&req); err != nil {
 		return validationErr()
 	}
 
-	if err := echoCtx.Validate(&req); err != nil {
+	if err := e.Validate(&req); err != nil {
 		return validationErr()
 	}
 
@@ -54,22 +54,22 @@ func (h *Handler) CreateShort(echoCtx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction")
 	}
 
-	return echoCtx.JSON(http.StatusCreated, map[string]string{
+	return e.JSON(http.StatusCreated, map[string]string{
 		"url": fmt.Sprintf("%s/%s", h.ApiDomain, key),
 	})
 }
 
-func (h *Handler) GetLong(ctx echo.Context) error {
+func (h *Handler) GetLong(e echo.Context) error {
 	var param KeyParam
-	if err := ctx.Bind(&param); err != nil {
+	if err := e.Bind(&param); err != nil {
 		return err
 	}
 
-	if err := ctx.Validate(&param); err != nil {
+	if err := e.Validate(&param); err != nil {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlStore.Get(ctx.Request().Context(), strings.ToLower(param.Key))
+	longUrl, err := h.UrlStore.Get(e.Request().Context(), strings.ToLower(param.Key))
 	if err != nil {
 		if err == urls.ErrNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "url not found")
@@ -77,7 +77,7 @@ func (h *Handler) GetLong(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get url")
 	}
 
-	return ctx.Redirect(http.StatusMovedPermanently, longUrl)
+	return e.Redirect(http.StatusMovedPermanently, longUrl)
 }
 
 func validationErr() error {
