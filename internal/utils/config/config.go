@@ -48,7 +48,7 @@ func ParseEnv() (*cfg, error) {
 		"KEY_CRON_SCHEDULE": "",
 		"KEY_DB_URL":        "",
 		"LOG_LEVEL":         "",
-		"PORT":              "",
+		"SERVER_PORT":       "",
 		"URL_CACHE_URL":     "",
 		"URL_CRON_SCHEDULE": "",
 		"URL_DB_NAME":       "",
@@ -85,7 +85,7 @@ func ParseEnv() (*cfg, error) {
 		Domain:   envVars["API_DOMAIN"],
 		Key:      Key,
 		LogLevel: logLevel,
-		Port:     envVars["PORT"],
+		Port:     envVars["SERVER_PORT"],
 		Url:      Url,
 	}
 

@@ -10,9 +10,9 @@ start:
 
 start-multiple:
 	@echo "Starting servers..."
-	PORT=8081 go run main.go &
-	PORT=8082 go run main.go &
-	PORT=8083 go run main.go &
+	SERVER_PORT=8081 go run main.go &
+	SERVER_PORT=8082 go run main.go &
+	SERVER_PORT=8083 go run main.go &
 	wait
 
 stop-multiple:
@@ -26,6 +26,9 @@ start-dbs:
 
 stop-dbs:
 	docker compose down
+
+test:
+	go test ./...
 
 lint: lint-install lint-run
 

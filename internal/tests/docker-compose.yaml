@@ -1,0 +1,98 @@
+services:
+  url-shortener-server:
+    build:
+      context: ../../.
+      dockerfile: Dockerfile
+    container_name: url-shortener-server-test
+    env_file:
+      - .env.test
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      url-cache:
+        condition: service_healthy
+      key-cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: key-db-test
+    restart: unless-stopped
+    env_file:
+      - .env.test
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: keydb
+    volumes:
+      - ../store/keys/schema/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5431:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d keydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  mongo:
+    image: mongo:7
+    container_name: url-db-test
+    restart: unless-stopped
+    env_file:
+      - .env.test
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testuser
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "5434:27017"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' --quiet || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    
+  url-cache:
+    image: redis:7.4
+    container_name: url-cache-test
+    restart: unless-stopped
+    ports:
+      - "5435:6379"
+    command:  [
+      "redis-server",
+      "--maxmemory", "512mb",
+      "--maxmemory-policy", "allkeys-lru",
+      "--loglevel", "warning"
+    ]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  key-cache:
+    image: redis:7.4
+    container_name: key-cache-test
+    restart: unless-stopped
+    ports:
+      - "5436:6379"
+    command: [
+      "redis-server",
+      "--loglevel", "warning"
+    ]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
