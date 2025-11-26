@@ -1,45 +1,54 @@
 package tests
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
+	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
 )
 
+var testResources *TestResources
+
+func TestMain(m *testing.M) {
+	_ = godotenv.Load(".env.test")
+	ctx := context.Background()
+
+	var err error
+	testResources, err = setupTestResources(ctx, &testing.T{})
+	if err != nil {
+		fmt.Printf("setup tests failed: %s\n", err)
+		if testResources != nil {
+			testResources.Cleanup(ctx, &testing.T{})
+		}
+		os.Exit(1)
+	}
+
+	exitCode := m.Run()
+
+	testResources.Cleanup(ctx, &testing.T{})
+	if exitCode != 0 {
+		slog.Error("tests failed", slog.Int("exit_code", exitCode))
+	}
+
+	os.Exit(exitCode)
+}
+
 type CreateResponse struct {
 	Url string `json:"url"`
 }
 
-func TestIntegration(t *testing.T) {
-	_ = godotenv.Load(".env.test")
-	ctx := context.Background()
-
-	testResources, err := setupTestResources(ctx, t)
-	if err != nil {
-		fmt.Printf("setup tests failed: %s", err)
-		testResources.Cleanup(ctx, t)
-		os.Exit(1)
-	}
-
-	t.Cleanup(func() {
-		testResources.Cleanup(ctx, t)
-	})
-
+func TestUrl(t *testing.T) {
 	t.Run("redirects to original url by short url", func(t *testing.T) {
 		apiDomain := os.Getenv("API_DOMAIN")
 		newKey := "abcde123"
 		longUrl := "https://myveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongurl.com"
 
 		rows, err := testResources.KeyDbPool.Query(
-			ctx,
+			t.Context(),
 			`INSERT INTO keys (key_value) VALUES ($1)`,
 			newKey,
 		)
@@ -55,20 +64,11 @@ func TestIntegration(t *testing.T) {
 			t.Fatalf("expected status 201, got %d", createResp.StatusCode)
 		}
 
-		body, err := io.ReadAll(createResp.Body)
-		if err != nil {
-			t.Fatalf("failed to read POST /create response body: %v", err)
-		}
-
-		var createRes CreateResponse
-		err = json.Unmarshal(body, &createRes)
-		if err != nil {
-			t.Fatalf("failed to parse POST /create JSON response: %v. Body: %s", err, string(body))
-		}
+		actualCreateRes := parseJSONResponse[CreateResponse](t, createResp)
 
 		expectedUrl := fmt.Sprintf("%s/%s", apiDomain, newKey)
-		if createRes.Url != expectedUrl {
-			t.Errorf("expected url '%s', got '%s'", expectedUrl, createRes.Url)
+		if actualCreateRes.Url != expectedUrl {
+			t.Errorf("expected url '%s', got '%s'", expectedUrl, actualCreateRes.Url)
 		}
 
 		getResp := getLongUrl(t, testResources.AppUrl, newKey)
@@ -102,65 +102,4 @@ func TestIntegration(t *testing.T) {
 			t.Fatalf("expected status 400, got %d", resp.StatusCode)
 		}
 	})
-}
-
-func createShortUrl(t *testing.T, baseUrl, longUrl string) *http.Response {
-	t.Helper()
-
-	urlString := fmt.Sprintf("%s/create", baseUrl)
-	parsedUrl, err := url.Parse(urlString)
-	if err != nil {
-		t.Fatalf("failed to parse POST /create url: %v", err)
-	}
-
-	b, err := json.Marshal(map[string]string{
-		"url": longUrl,
-	})
-	if err != nil {
-		t.Fatalf("failed to parse POST /create request body: %v", err)
-	}
-
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, parsedUrl.String(), bytes.NewBuffer(b))
-	if err != nil {
-		t.Fatalf("failed to create POST /create request: %v", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("failed to make POST /create request: %v", err)
-	}
-
-	return resp
-}
-
-func getLongUrl(t *testing.T, baseUrl, key string) *http.Response {
-	t.Helper()
-
-	urlString := fmt.Sprintf("%s/%s", baseUrl, key)
-	parsedUrl, err := url.Parse(urlString)
-	if err != nil {
-		t.Fatalf("failed to parse GET /%s url: %v", key, err)
-	}
-
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, parsedUrl.String(), http.NoBody)
-	if err != nil {
-		t.Fatalf("failed to create GET /%s request: %v", key, err)
-	}
-
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			// stop following redirects
-			return http.ErrUseLastResponse
-		},
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("failed to make GET /%s request: %v", key, err)
-	}
-
-	return resp
 }
