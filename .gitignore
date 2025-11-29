@@ -4,5 +4,3 @@ prod/.env
 .DS_Store
 .idea
 bin/
-
-*.pem
