@@ -33,24 +33,23 @@ func (h *Handler) CreateShort(e echo.Context) error {
 		return validationErr()
 	}
 
-	tx, err := h.KeyStore.BeginTransaction(ctx)
+	tx, err := h.UrlStore.BeginTransaction(ctx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to start transaction")
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck
-	key, err := h.KeyStore.GetUnused(ctx, tx)
+	key, err := h.UrlStore.GetUnusedKey(ctx, tx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get unused key")
 	}
 
 	urlData := &model.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	id, err := h.UrlStore.Insert(ctx, urlData)
+	err = h.UrlStore.InsertNewUrl(ctx, urlData)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new url data")
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		_ = h.UrlStore.DeleteById(ctx, id)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction")
 	}
 
@@ -69,7 +68,7 @@ func (h *Handler) GetLong(e echo.Context) error {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlStore.Get(e.Request().Context(), strings.ToLower(param.Key))
+	longUrl, err := h.UrlStore.GetLongUrl(e.Request().Context(), strings.ToLower(param.Key))
 	if err != nil {
 		if err == urls.ErrNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "url not found")

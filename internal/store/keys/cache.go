@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/Marie20767/url-shortener/internal/utils/config"
 	"github.com/redis/go-redis/v9"
 )
+
+const cacheRefillThreshold = 10
 
 type Cache struct {
 	client *redis.Client
 }
 
-const cacheRefillThreshold = 10
-
-func NewCache(cacheUrl string) (*Cache, error) {
-	opt, err := redis.ParseURL(cacheUrl)
+func New(ctx context.Context, cfg *config.Key) (*Cache, error) {
+	opt, err := redis.ParseURL(cfg.CacheUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new key cache: %w", err)
 	}
@@ -24,6 +25,11 @@ func NewCache(cacheUrl string) (*Cache, error) {
 		client: redis.NewClient(opt),
 	}, nil
 }
+
+func (c *Cache) Ping(ctx context.Context) error {
+	return c.client.Ping(ctx).Err()
+}
+
 
 // lua script needed to ensure atomic key fetching from the cache across all server instances
 var getAndDelScript = redis.NewScript(`
@@ -80,13 +86,9 @@ func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
 func (c *Cache) getSize(ctx context.Context) int64 {
 	keysCount, err := c.client.DBSize(ctx).Result()
 	if err != nil {
-		slog.Error("failed to get keys cache size", slog.Any("error", err))
+		slog.Error("failed to get key cache size", slog.Any("error", err))
 		return 0
 	}
 
 	return keysCount
-}
-
-func (c *Cache) Ping(ctx context.Context) error {
-	return c.client.Ping(ctx).Err()
 }

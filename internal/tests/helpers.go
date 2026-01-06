@@ -13,22 +13,22 @@ import (
 func createShortUrl(t *testing.T, baseUrl, longUrl string) *http.Response {
 	t.Helper()
 
-	urlString := fmt.Sprintf("%s/create", baseUrl)
+	urlString := fmt.Sprintf("%s/urls", baseUrl)
 	parsedUrl, err := url.Parse(urlString)
 	if err != nil {
-		t.Fatalf("failed to parse POST /create url: %v", err)
+		t.Fatalf("failed to parse POST /urls url: %v", err)
 	}
 
 	b, err := json.Marshal(map[string]string{
 		"url": longUrl,
 	})
 	if err != nil {
-		t.Fatalf("failed to parse POST /create request body: %v", err)
+		t.Fatalf("failed to parse POST /urls request body: %v", err)
 	}
 
 	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, parsedUrl.String(), bytes.NewBuffer(b))
 	if err != nil {
-		t.Fatalf("failed to create POST /create request: %v", err)
+		t.Fatalf("failed to create POST /urls request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -36,7 +36,7 @@ func createShortUrl(t *testing.T, baseUrl, longUrl string) *http.Response {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("failed to make POST /create request: %v", err)
+		t.Fatalf("failed to make POST /urls request: %v", err)
 	}
 
 	return resp

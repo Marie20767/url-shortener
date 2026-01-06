@@ -22,7 +22,7 @@ stop-multiple:
 	@lsof -ti tcp:8083 | xargs kill -9 || true
 
 start-dbs:
-	docker compose up -d postgres mongo url-cache key-cache
+	docker compose up -d postgres url-cache key-cache
 
 stop-dbs:
 	docker compose down

@@ -10,6 +10,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      url-cache:
+        condition: service_healthy
+      key-cache:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/health || exit 1"]
       interval: 5s
@@ -19,44 +23,24 @@ services:
 
   postgres:
     image: postgres:18-alpine
-    container_name: key-db
-    env_file:
-      - .env
-    environment:
-      POSTGRES_USER: ${KEY_DB_USER}
-      POSTGRES_PASSWORD: ${KEY_DB_PASSWORD}
-      POSTGRES_DB: ${KEY_DB_NAME}
-    ports:
-      - "${KEY_DB_PORT}:5432"
-    restart: unless-stopped
-    volumes:
-      - ../internal/store/keys/schema/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${KEY_DB_USER} -d ${KEY_DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mongo:
-    image: mongo:7
     container_name: url-db
     env_file:
       - .env
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${URL_DB_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${URL_DB_PASSWORD}
-      URL_DB_URL: mongodb://${URL_DB_USER}:${URL_DB_PASSWORD}@mongo:${URL_DB_PORT}/?authSource=admin
+      POSTGRES_USER: ${URL_DB_USER}
+      POSTGRES_PASSWORD: ${URL_DB_PASSWORD}
+      POSTGRES_DB: ${URL_DB_NAME}
     ports:
-      - "${URL_DB_PORT}:${URL_DB_PORT}"
+      - "${URL_DB_PORT}:5432"
+    restart: unless-stopped
     volumes:
-      - mongo_data:/data/db
+      - ../internal/store/urls/schema/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' --quiet || exit 1"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${URL_DB_USER} -d ${URL_DB_NAME}"]
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
   url-cache:
     image: redis:7.4
@@ -100,7 +84,6 @@ services:
 
 volumes:
   postgres_data:
-  mongo_data:
   url_cache_data:
   key_cache_data:
  
