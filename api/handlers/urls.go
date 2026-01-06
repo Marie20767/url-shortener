@@ -77,7 +77,7 @@ func (h *Handler) GetLong(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get url")
 	}
 
-	return e.Redirect(http.StatusMovedPermanently, longUrl)
+	return e.Redirect(http.StatusFound, longUrl)
 }
 
 func validationErr() error {
