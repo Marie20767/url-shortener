@@ -175,7 +175,7 @@ func (s *UrlStore) DeleteExpiredUrls(ctx context.Context) ([]string, error) {
 	query := "DELETE FROM urls WHERE expiry <= NOW() RETURNING short"
 	rows, err := s.pool.Query(ctx, query)
 	if err != nil {
-		return deletedKeys, fmt.Errorf("failed to delete expired urls", err)
+		return deletedKeys, fmt.Errorf("failed to delete expired urls: %w", err)
 	}
 	defer rows.Close()
 
