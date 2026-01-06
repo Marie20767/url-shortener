@@ -5,9 +5,9 @@ CREATE TABLE keys (
 
 CREATE TABLE urls (
   short VARCHAR(8) PRIMARY KEY,
-  long string NOT NULL,
-  expiry TIMESTAMPTZ,
-  user_id PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  long TEXT NOT NULL,
+  expiry TIMESTAMPTZ NULL,
+  user_id UUID DEFAULT gen_random_uuid() NOT NULL,
 
-  CONSTRAINT fk_short_url FOREIGN KEY(short_url) REFERENCES keys(id)
-)
+  CONSTRAINT fk_short FOREIGN KEY(short) REFERENCES keys(id)
+);
