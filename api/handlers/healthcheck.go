@@ -19,17 +19,17 @@ func (h *Handler) HealthCheck(e echo.Context) error {
 		return "ok"
 	}
 
-	keyStoreStatus := check(h.KeyCache.Ping)
+	keyCacheStatus := check(h.KeyCache.Ping)
 	urlStoreStatus := check(h.UrlStore.Ping)
 
 	httpStatus := http.StatusOK
-	if keyStoreStatus != "ok" || urlStoreStatus != "ok" {
+	if keyCacheStatus != "ok" || urlStoreStatus != "ok" {
 		httpStatus = http.StatusServiceUnavailable
 	}
 
 	return e.JSON(httpStatus, map[string]string{
 		"status": "ok",
-		"cache":  keyStoreStatus,
+		"cache":  keyCacheStatus,
 		"url_db": urlStoreStatus,
 	})
 }

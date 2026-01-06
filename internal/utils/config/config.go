@@ -49,8 +49,8 @@ func ParseEnv() (*cfg, error) {
 		"SERVER_PORT":       "",
 		"URL_CACHE_URL":     "",
 		"URL_CRON_SCHEDULE": "",
-		"URL_DB_NAME":       "",
-		"URL_DB_URL":        "",
+		"DB_NAME":           "",
+		"DB_URL":            "",
 	}
 
 	for key := range envVars {
@@ -69,8 +69,8 @@ func ParseEnv() (*cfg, error) {
 	Url := &Url{
 		CacheUrl:     envVars["URL_CACHE_URL"],
 		CronSchedule: envVars["URL_CRON_SCHEDULE"],
-		DbName:       envVars["URL_DB_NAME"],
-		DbUrl:        envVars["URL_DB_URL"],
+		DbName:       envVars["DB_NAME"],
+		DbUrl:        envVars["DB_URL"],
 	}
 
 	logLevel, ok := logLevelMap[envVars["LOG_LEVEL"]]

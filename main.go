@@ -67,7 +67,7 @@ func run() error {
 
 	serverErr := make(chan error, 1)
 
-	srv := server.New(urlStore, cfg.Domain)
+	srv := server.New(urlStore, keyCache, cfg.Domain)
 	go func() {
 		serverErr <- srv.Start(cfg.Port)
 	}()
