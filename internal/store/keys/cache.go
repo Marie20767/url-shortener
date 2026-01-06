@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/Marie20767/url-shortener/internal/utils/config"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
 const cacheRefillThreshold = 10
@@ -29,7 +30,6 @@ func New(ctx context.Context, cfg *config.Key) (*Cache, error) {
 func (c *Cache) Ping(ctx context.Context) error {
 	return c.client.Ping(ctx).Err()
 }
-
 
 // lua script needed to ensure atomic key fetching from the cache across all server instances
 var getAndDelScript = redis.NewScript(`
@@ -64,15 +64,15 @@ func (c *Cache) Get(ctx context.Context) (string, bool) {
 	return key, true
 }
 
-func (c *Cache) Add(ctx context.Context, keyMap map[string]string) {
+func (c *Cache) Set(ctx context.Context, keyMap map[string]string) {
 	err := c.client.MSet(ctx, keyMap).Err()
 	if err != nil {
 		slog.Error("failed to insert keys into cache", slog.Any("error", err))
 	}
 }
 
-func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
-	currentCacheSize := c.getSize(ctx)
+func (c *Cache) ShouldRefill(ctx context.Context) bool {
+	currentCacheSize := c.size(ctx)
 	slog.Debug("cache", "size", currentCacheSize)
 
 	if currentCacheSize < int64(cacheRefillThreshold) {
@@ -83,7 +83,7 @@ func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
 	return false
 }
 
-func (c *Cache) getSize(ctx context.Context) int64 {
+func (c *Cache) size(ctx context.Context) int64 {
 	keysCount, err := c.client.DBSize(ctx).Result()
 	if err != nil {
 		slog.Error("failed to get key cache size", slog.Any("error", err))

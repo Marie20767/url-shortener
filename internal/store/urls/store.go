@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UrlStore struct {

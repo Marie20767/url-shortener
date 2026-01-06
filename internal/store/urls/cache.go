@@ -38,7 +38,7 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool) {
 	return url, true
 }
 
-func (c *Cache) Add(ctx context.Context, urlData *model.UrlData, currentTimestamp time.Time) {
+func (c *Cache) Set(ctx context.Context, urlData *model.UrlData, currentTimestamp time.Time) {
 	var expiry time.Duration
 	switch urlData.Expiry {
 	case nil:

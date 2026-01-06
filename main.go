@@ -48,7 +48,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	defer urlStore.Close() //nolint:errcheck
+	defer urlStore.Close()
 	slog.Info("successfully connected to url store!")
 
 	keyCron := cron.New(cfg.Key.CronSchedule, "key-generation")

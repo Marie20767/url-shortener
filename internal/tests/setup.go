@@ -12,7 +12,7 @@ import (
 
 type TestResources struct {
 	ComposeStack *compose.DockerCompose
-	KeyDbPool    *pgxpool.Pool
+	DbPool       *pgxpool.Pool
 	AppUrl       string
 }
 
@@ -41,24 +41,24 @@ func setupTestResources(ctx context.Context, t *testing.T) (*TestResources, erro
 		return nil, err
 	}
 
-	keyDbUrl, err := getKeyDbUrl(ctx, composeStack)
+	urldbUrl, err := getDbUrl(ctx, composeStack)
 	if err != nil {
 		return nil, err
 	}
 
-	keyDbPool, err := pgxpool.New(ctx, keyDbUrl)
+	urldbPool, err := pgxpool.New(ctx, urldbUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new key db pool: %w", err)
+		return nil, fmt.Errorf("failed to create new db pool: %w", err)
 	}
 
-	if err := keyDbPool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("failed to connect to key db: %w", err)
+	if err := urldbPool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to connect to db: %w", err)
 	}
 
 	return &TestResources{
 		ComposeStack: composeStack,
 		AppUrl:       appUrl,
-		KeyDbPool:    keyDbPool,
+		DbPool:       urldbPool,
 	}, nil
 }
 
@@ -67,8 +67,8 @@ func (tr *TestResources) Cleanup(ctx context.Context, t *testing.T) {
 		return
 	}
 
-	if tr.KeyDbPool != nil {
-		tr.KeyDbPool.Close()
+	if tr.DbPool != nil {
+		tr.DbPool.Close()
 	}
 
 	if tr.ComposeStack != nil {
@@ -79,26 +79,26 @@ func (tr *TestResources) Cleanup(ctx context.Context, t *testing.T) {
 	}
 }
 
-func getKeyDbUrl(ctx context.Context, composeStack *compose.DockerCompose) (string, error) {
-	keyDbContainer, err := composeStack.ServiceContainer(ctx, "postgres")
+func getDbUrl(ctx context.Context, composeStack *compose.DockerCompose) (string, error) {
+	urldbContainer, err := composeStack.ServiceContainer(ctx, "postgres")
 	if err != nil {
-		return "", fmt.Errorf("failed to get key db container: %w", err)
+		return "", fmt.Errorf("failed to get db container: %w", err)
 	}
 
-	keyDbPort, err := keyDbContainer.MappedPort(ctx, "5432")
+	urldbPort, err := urldbContainer.MappedPort(ctx, "5432")
 	if err != nil {
-		return "", fmt.Errorf("failed to get key db mapped port: %w", err)
+		return "", fmt.Errorf("failed to get db mapped port: %w", err)
 	}
 
-	keyDbHost, err := keyDbContainer.Host(ctx)
+	urldbHost, err := urldbContainer.Host(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to get key db host: %w", err)
+		return "", fmt.Errorf("failed to get db host: %w", err)
 	}
 
 	return fmt.Sprintf(
-		"postgres://testuser:password@%s:%s/keydb?sslmode=disable",
-		keyDbHost,
-		keyDbPort.Port(),
+		"postgres://testuser:password@%s:%s/urldb?sslmode=disable",
+		urldbHost,
+		urldbPort.Port(),
 	), nil
 }
 

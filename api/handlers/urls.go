@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -68,7 +67,7 @@ func (h *Handler) GetLong(e echo.Context) error {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlStore.GetLongUrl(e.Request().Context(), strings.ToLower(param.Key))
+	longUrl, err := h.UrlStore.GetLongUrl(e.Request().Context(), param.Key)
 	if err != nil {
 		if err == urls.ErrNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "url not found")
@@ -80,5 +79,5 @@ func (h *Handler) GetLong(e echo.Context) error {
 }
 
 func validationErr() error {
-	return echo.NewHTTPError(http.StatusBadRequest, "validation Error")
+	return echo.NewHTTPError(http.StatusBadRequest, "validation error")
 }

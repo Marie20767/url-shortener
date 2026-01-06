@@ -8,9 +8,10 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 	"github.com/Marie20767/url-shortener/internal/utils/set"
-	"github.com/jackc/pgx/v5"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 )
 
 func (s *UrlStore) GetUnusedKey(ctx context.Context, tx pgx.Tx) (string, error) {
-	if s.keyCache.ShouldRefillCache(ctx) {
+	if s.keyCache.ShouldRefill(ctx) {
 		// prevents blocking response while new keys are being generated
 		go func() {
 			if err := s.GenerateAndStoreKeys(ctx); err != nil {
@@ -98,13 +99,13 @@ func (s *UrlStore) InsertNewKeys(ctx context.Context, keys []string) (int, error
 
 		inserted[key] = key
 	}
-	s.keyCache.Add(ctx, inserted)
+	s.keyCache.Set(ctx, inserted)
 
 	return len(inserted), nil
 }
 
 func (s *UrlStore) GenerateAndStoreKeys(ctx context.Context) error {
-	if !s.keyCache.ShouldRefillCache(ctx) {
+	if !s.keyCache.ShouldRefill(ctx) {
 		return nil
 	}
 
@@ -206,7 +207,7 @@ func (s *UrlStore) GetLongUrl(ctx context.Context, key string) (string, error) {
 		return "", err
 	}
 
-	s.urlCache.Add(ctx, urlData, now)
+	s.urlCache.Set(ctx, urlData, now)
 
 	return urlData.Url, nil
 }
