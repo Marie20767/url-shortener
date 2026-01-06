@@ -41,24 +41,24 @@ func setupTestResources(ctx context.Context, t *testing.T) (*TestResources, erro
 		return nil, err
 	}
 
-	urldbUrl, err := getDbUrl(ctx, composeStack)
+	dbUrl, err := getDbUrl(ctx, composeStack)
 	if err != nil {
 		return nil, err
 	}
 
-	urldbPool, err := pgxpool.New(ctx, urldbUrl)
+	dbPool, err := pgxpool.New(ctx, dbUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new db pool: %w", err)
 	}
 
-	if err := urldbPool.Ping(ctx); err != nil {
+	if err := dbPool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("failed to connect to db: %w", err)
 	}
 
 	return &TestResources{
 		ComposeStack: composeStack,
 		AppUrl:       appUrl,
-		DbPool:       urldbPool,
+		DbPool:       dbPool,
 	}, nil
 }
 
@@ -80,25 +80,25 @@ func (tr *TestResources) Cleanup(ctx context.Context, t *testing.T) {
 }
 
 func getDbUrl(ctx context.Context, composeStack *compose.DockerCompose) (string, error) {
-	urldbContainer, err := composeStack.ServiceContainer(ctx, "postgres")
+	dbContainer, err := composeStack.ServiceContainer(ctx, "postgres")
 	if err != nil {
 		return "", fmt.Errorf("failed to get db container: %w", err)
 	}
 
-	urldbPort, err := urldbContainer.MappedPort(ctx, "5432")
+	dbPort, err := dbContainer.MappedPort(ctx, "5432")
 	if err != nil {
 		return "", fmt.Errorf("failed to get db mapped port: %w", err)
 	}
 
-	urldbHost, err := urldbContainer.Host(ctx)
+	dbHost, err := dbContainer.Host(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get db host: %w", err)
 	}
 
 	return fmt.Sprintf(
-		"postgres://testuser:password@%s:%s/urldb?sslmode=disable",
-		urldbHost,
-		urldbPort.Port(),
+		"postgres://testuser:password@%s:%s/urls-test?sslmode=disable",
+		dbHost,
+		dbPort.Port(),
 	), nil
 }
 
