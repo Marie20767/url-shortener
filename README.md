@@ -125,11 +125,11 @@ Create the following env files (you can use `.env.example` as a reference for th
 
 #### 2. Without docker:
 
-- Start the app:
-`make start`
-
 - Start databases (still run via docker):
 `make start-dbs`
+
+- Start the app:
+`make start`
 
 - Stop databases (still run via docker):
 `make stop-dbs`
