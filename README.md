@@ -21,7 +21,7 @@ Implementation of a URL shortener built in Go to explore scaling techniques and 
 ## Key Design Decisions
 
 ### Read-Optimised Caching
-Read-through cache with LRU eviction for sub-200ms redirects on URL lookups
+Cache-aside Redis cache with LRU eviction for sub-200ms redirects on URL lookups.
 
 ### Database Schema
 Two-table design:
