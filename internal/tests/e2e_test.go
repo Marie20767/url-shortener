@@ -42,7 +42,7 @@ type CreateResponse struct {
 }
 
 func TestUrl(t *testing.T) {
-	t.Run("redirects to original url by short url", func(t *testing.T) {		
+	t.Run("redirects to original url by short url", func(t *testing.T) {
 		apiDomain := os.Getenv("API_DOMAIN")
 		newKey := "aBcdE123"
 		longUrl := "https://myveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongurl.com"
