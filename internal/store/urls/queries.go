@@ -154,14 +154,14 @@ func getRandomString(length int) (string, error) {
 	return string(bytes), nil
 }
 
-func (s *UrlStore) InsertNewUrl(ctx context.Context, urlData *model.UrlData) error {
+func (s *UrlStore) InsertNewUrl(ctx context.Context, tx pgx.Tx, urlData *model.UrlData) error {
 	if urlData.Expiry != nil {
 		utcTime := urlData.Expiry.UTC()
 		urlData.Expiry = &utcTime
 	}
 
 	query := "INSERT INTO urls (short, long, expiry) VALUES ($1, $2, $3)"
-	_, err := s.pool.Exec(ctx, query, urlData.Key, urlData.Url, urlData.Expiry)
+	_, err := tx.Exec(ctx, query, urlData.Key, urlData.Url, urlData.Expiry)
 	if err != nil {
 		return fmt.Errorf("failed to insert new url into db: %w", err)
 	}

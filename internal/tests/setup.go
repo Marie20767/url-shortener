@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go/modules/compose"
@@ -17,8 +16,7 @@ type TestResources struct {
 }
 
 // setupTestResources creates and starts all required containers for testing
-func setupTestResources(ctx context.Context, t *testing.T) (*TestResources, error) {
-	t.Helper()
+func setupTestResources(ctx context.Context) (*TestResources, error) {
 	composeStack, err := compose.NewDockerCompose("./docker-compose.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compose stack: %w", err)
@@ -62,7 +60,7 @@ func setupTestResources(ctx context.Context, t *testing.T) (*TestResources, erro
 	}, nil
 }
 
-func (tr *TestResources) Cleanup(ctx context.Context, t *testing.T) {
+func (tr *TestResources) Cleanup(ctx context.Context) {
 	if tr == nil {
 		return
 	}
@@ -74,7 +72,7 @@ func (tr *TestResources) Cleanup(ctx context.Context, t *testing.T) {
 	if tr.ComposeStack != nil {
 		err := tr.ComposeStack.Down(ctx, compose.RemoveOrphans(true), compose.RemoveImagesLocal)
 		if err != nil {
-			t.Logf("failed to tear down compose stack: %v", err)
+			fmt.Printf("failed to tear down compose stack: %v\n", err)
 		}
 	}
 }

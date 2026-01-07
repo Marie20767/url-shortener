@@ -18,18 +18,18 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	var err error
-	testResources, err = setupTestResources(ctx, &testing.T{})
+	testResources, err = setupTestResources(ctx)
 	if err != nil {
 		fmt.Printf("setup tests failed: %s\n", err)
 		if testResources != nil {
-			testResources.Cleanup(ctx, &testing.T{})
+			testResources.Cleanup(ctx)
 		}
 		os.Exit(1)
 	}
 
 	exitCode := m.Run()
 
-	testResources.Cleanup(ctx, &testing.T{})
+	testResources.Cleanup(ctx)
 	if exitCode != 0 {
 		slog.Error("tests failed", slog.Int("exit_code", exitCode))
 	}
@@ -42,7 +42,7 @@ type CreateResponse struct {
 }
 
 func TestUrl(t *testing.T) {
-	t.Run("redirects to original url by short url", func(t *testing.T) {
+	t.Run("redirects to original url by short url", func(t *testing.T) {		
 		apiDomain := os.Getenv("API_DOMAIN")
 		newKey := "aBcdE123"
 		longUrl := "https://myveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongurl.com"

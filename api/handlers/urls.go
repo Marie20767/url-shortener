@@ -43,7 +43,7 @@ func (h *Handler) CreateShort(e echo.Context) error {
 	}
 
 	urlData := &model.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	err = h.UrlStore.InsertNewUrl(ctx, urlData)
+	err = h.UrlStore.InsertNewUrl(ctx, tx, urlData)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new url data")
 	}
