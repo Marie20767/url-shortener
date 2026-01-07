@@ -96,7 +96,7 @@ func (s *UrlStore) InsertNewKeys(ctx context.Context, keys []string) (int, error
 			return 0, err
 		}
 
-		inserted[key] = key
+		inserted[key] = ""
 	}
 	s.keyCache.Set(ctx, inserted)
 
