@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 
-	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 )
 
@@ -69,7 +69,7 @@ func (h *Handler) GetLong(e echo.Context) error {
 
 	longUrl, err := h.UrlStore.GetLongUrl(e.Request().Context(), param.Key)
 	if err != nil {
-		if err == urls.ErrNotFound {
+		if err == pgx.ErrNoRows {
 			return echo.NewHTTPError(http.StatusNotFound, "url not found")
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get url")

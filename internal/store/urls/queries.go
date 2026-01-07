@@ -3,7 +3,6 @@ package urls
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -191,8 +190,6 @@ func (s *UrlStore) DeleteExpiredUrls(ctx context.Context) ([]string, error) {
 	return deletedKeys, nil
 }
 
-var ErrNotFound = errors.New("url not found")
-
 func (s *UrlStore) GetLongUrl(ctx context.Context, key string) (string, error) {
 	now := time.Now().UTC()
 	url, ok := s.urlCache.Get(ctx, key)
@@ -200,14 +197,14 @@ func (s *UrlStore) GetLongUrl(ctx context.Context, key string) (string, error) {
 		return url, nil
 	}
 
-	var urlData *model.UrlData
+	var urlData model.UrlData
 	query := "SELECT short, long, expiry FROM urls WHERE short = $1 AND (expiry > NOW() OR expiry IS NULL)"
 	row := s.pool.QueryRow(ctx, query, key)
-	if err := row.Scan(&urlData); err != nil {
+	if err := row.Scan(&urlData.Key, &urlData.Url, &urlData.Expiry); err != nil {
 		return "", err
 	}
 
-	s.urlCache.Set(ctx, urlData, now)
+	s.urlCache.Set(ctx, &urlData, now)
 
 	return urlData.Url, nil
 }
