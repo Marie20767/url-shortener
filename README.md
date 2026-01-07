@@ -2,14 +2,14 @@
 
 Implementation of a URL shortener built in Go to explore scaling techniques and meet demanding non-functional requirements.
 
-### Non-Functional Requirements
+## Non-Functional Requirements
 
 - **Low-latency redirects**: ~200ms response time for URL lookups
 - **High scale**: Designed to support millions of DAU and 1B URLs
 - **Uniqueness**: Guaranteed unique short URL generation with no collisions
 - **High availability**: Fault-tolerant architecture with horizontal scalability
 
-### Architecture & Tech Stack
+## Architecture & Tech Stack
 
 ![high-level system architecture](apparchitecture.png)
 
@@ -18,17 +18,17 @@ Implementation of a URL shortener built in Go to explore scaling techniques and 
 - **Cache Layers**: Redis (`github.com/redis/go-redis/v9`) - low-latency URL lookups and unique key distribution
 - **Background Jobs**: Cron (`github.com/robfig/cron/v3`) - key generation and expired URL cleanup
 
-### Key Design Decisions
+## Key Design Decisions
 
-#### Read-Optimised Caching
+### Read-Optimised Caching
 Read-through cache with LRU eviction for sub-200ms redirects on URL lookups
 
-#### Database Schema
+### Database Schema
 Two-table design:
-- `keys` table: Tracks all generated keys and their usage status
-- `urls` table: Stores short-to-long URL mappings with metadata
+- `keys` table: tracks all generated keys and their usage status
+- `urls` table: stores short-to-long URL mappings with metadata
 
-#### Pre-Generated Key Pool with Atomic Key Claiming
+### Pre-Generated Key Pool with Atomic Key Claiming
 Short URLs use base62-encoded keys that are:
 1. **Pre-generated in batches** on startup and via background cron job
 2. **Checked for uniqueness** during generation and stored in a dedicated `keys` table
@@ -37,23 +37,23 @@ Short URLs use base62-encoded keys that are:
 
 This approach eliminates collision checks during URL creation.
 
-#### Health Checks
+### Health Checks
 `/health` endpoint monitors:
 - PostgreSQL connectivity
 - Redis connectivity
 
 Returns `200 OK` if all dependencies are healthy, `503 Service Unavailable` otherwise.
 
-### Future Optimisations
+## Future Optimisations
 
-#### Redis High Availability
+### Redis High Availability
 Currently using a single Redis instance, which is a single point of failure. I am planning to use Redis Sentinel for automatic failover with a master-replica setup.
 
-#### Additional Considerations
-- API Gateway (e.g. AWS API Gateway) to handle rate-limiting, authentication and load balancing
-- Vertically scaling primary server to handle more URL reads (slightly over-provisioned for writes but simpler and more cost effective than using separate read/write services)
-- Shard by shortURL if URL table exceeds memory limit
-- Read replicas for increased fault-tolerance 
+### Additional Considerations
+- API Gateway (e.g. AWS API Gateway) for rate limiting, authentication, and request routing/load balancing
+- Single primary service with vertical scaling optimised for read-heavy traffic; slightly over-provisioned for writes but simpler and more cost-effective than separating read/write microservices
+- Shard by shortURL when the urls table no longer fits in memory
+- Database read replicas to improve fault tolerance
 
 
 ## API
