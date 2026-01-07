@@ -47,7 +47,7 @@ func TestUrl(t *testing.T) {
 		newKey := "aBcdE123"
 		longUrl := "https://myveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongurl.com"
 
-		rows, err := testResources.DbPool.Query(
+		_, err := testResources.DbPool.Exec(
 			t.Context(),
 			`INSERT INTO keys (id) VALUES ($1)`,
 			newKey,
@@ -55,7 +55,6 @@ func TestUrl(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to insert new key: %v", err)
 		}
-		defer rows.Close()
 
 		createResp := createShortUrl(t, testResources.AppUrl, longUrl)
 		defer createResp.Body.Close() //nolint:errcheck

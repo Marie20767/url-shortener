@@ -30,7 +30,7 @@ Two-table design:
 
 ### Pre-Generated Key Pool with Atomic Key Claiming
 Short URLs use base62-encoded keys that are:
-1. **Pre-generated in batches** on startup and via background cron job
+1. **Dual-mode key pre-generation** via background cron job and cache-triggered async refill
 2. **Checked for uniqueness** during generation and stored in a dedicated `keys` table
 3. **Claimed atomically** from Redis keys cache using Lua scripts to prevent race conditions across multiple instances
 4. **Recycled after expiration** to maximise key space utilisation
