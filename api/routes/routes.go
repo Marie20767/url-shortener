@@ -8,6 +8,6 @@ import (
 
 func RegisterAll(e *echo.Echo, h *handlers.Handler) {
 	e.GET("/health", h.HealthCheck)
-	e.POST("/create", h.CreateShort)
+	e.POST("/urls", h.CreateShort)
 	e.GET("/:key", h.GetLong)
 }

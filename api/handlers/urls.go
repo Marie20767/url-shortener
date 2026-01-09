@@ -3,12 +3,11 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 
-	"github.com/Marie20767/url-shortener/internal/store/urls"
 	"github.com/Marie20767/url-shortener/internal/store/urls/model"
 )
 
@@ -33,24 +32,23 @@ func (h *Handler) CreateShort(e echo.Context) error {
 		return validationErr()
 	}
 
-	tx, err := h.KeyStore.BeginTransaction(ctx)
+	tx, err := h.UrlStore.BeginTransaction(ctx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to start transaction")
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck
-	key, err := h.KeyStore.GetUnused(ctx, tx)
+	key, err := h.UrlStore.GetUnusedKey(ctx, tx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get unused key")
 	}
 
 	urlData := &model.UrlData{Key: key, Url: req.Url, Expiry: req.Expiry}
-	id, err := h.UrlStore.Insert(ctx, urlData)
+	err = h.UrlStore.InsertNewUrl(ctx, tx, urlData)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to insert new url data")
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		_ = h.UrlStore.DeleteById(ctx, id)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit transaction")
 	}
 
@@ -69,17 +67,17 @@ func (h *Handler) GetLong(e echo.Context) error {
 		return validationErr()
 	}
 
-	longUrl, err := h.UrlStore.Get(e.Request().Context(), strings.ToLower(param.Key))
+	longUrl, err := h.UrlStore.GetLongUrl(e.Request().Context(), param.Key)
 	if err != nil {
-		if err == urls.ErrNotFound {
+		if err == pgx.ErrNoRows {
 			return echo.NewHTTPError(http.StatusNotFound, "url not found")
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get url")
 	}
 
-	return e.Redirect(http.StatusMovedPermanently, longUrl)
+	return e.Redirect(http.StatusFound, longUrl)
 }
 
 func validationErr() error {
-	return echo.NewHTTPError(http.StatusBadRequest, "validation Error")
+	return echo.NewHTTPError(http.StatusBadRequest, "validation error")
 }

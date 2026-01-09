@@ -4,27 +4,26 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/store/urls"
 )
 
-func KeyGenerationJob(keyStore *keys.KeyStore) func(ctx context.Context) {
+func KeyGenerationJob(urlStore *urls.UrlStore) func(ctx context.Context) {
 	return func(ctx context.Context) {
-		if err := keyStore.GenerateAndStoreKeys(ctx); err != nil {
+		if err := urlStore.GenerateAndStoreKeys(ctx); err != nil {
 			slog.Error(err.Error())
 		}
 	}
 }
 
-func UrlCleanUpJob(keyStore *keys.KeyStore, urlStore *urls.UrlStore) func(ctx context.Context) {
+func UrlCleanUpJob(urlStore *urls.UrlStore) func(ctx context.Context) {
 	return func(ctx context.Context) {
 		deletedKeys := cleanupUrls(urlStore, ctx)
-		freeUpKeys(keyStore, ctx, deletedKeys)
+		freeUpKeys(urlStore, ctx, deletedKeys)
 	}
 }
 
 func cleanupUrls(urlStore *urls.UrlStore, ctx context.Context) []string {
-	deletedKeys, err := urlStore.DeleteExpired(ctx)
+	deletedKeys, err := urlStore.DeleteExpiredUrls(ctx)
 
 	switch {
 	case err != nil:
@@ -38,8 +37,8 @@ func cleanupUrls(urlStore *urls.UrlStore, ctx context.Context) []string {
 	return deletedKeys
 }
 
-func freeUpKeys(keyStore *keys.KeyStore, ctx context.Context, deletedKeys []string) {
-	freedUpKeyCount, err := keyStore.FreeUpUnusedKeys(ctx, deletedKeys)
+func freeUpKeys(urlStore *urls.UrlStore, ctx context.Context, deletedKeys []string) {
+	freedUpKeyCount, err := urlStore.FreeUpUnusedKeys(ctx, deletedKeys)
 
 	switch {
 	case err != nil:

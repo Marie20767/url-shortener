@@ -3,7 +3,7 @@ package model
 import "time"
 
 type UrlData struct {
-	Key    string     `bson:"key_value"`
-	Url    string     `bson:"url"`
-	Expiry *time.Time `bson:"expiry,omitempty"`
+	Key    string     `bson:"short"`
+	Url    string     `bson:"long"`
+	Expiry *time.Time `bson:"expiry"`
 }

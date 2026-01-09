@@ -6,7 +6,7 @@ import (
 )
 
 type Handler struct {
-	KeyStore  *keys.KeyStore
+	KeyCache  *keys.Cache
 	UrlStore  *urls.UrlStore
 	ApiDomain string
 }

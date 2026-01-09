@@ -38,29 +38,28 @@ func run() error {
 	}))
 	slog.SetDefault(logger)
 
-	keyStore, err := keys.New(ctx, cfg.Key)
+	keyCache, err := keys.New(ctx, cfg.Key)
 	if err != nil {
 		return err
 	}
-	defer keyStore.Close()
-	slog.Info("successfully connected to key db!")
+	slog.Info("successfully created key cache!")
 
-	urlStore, err := urls.New(cfg.Url)
+	urlStore, err := urls.New(ctx, cfg.Url, keyCache)
 	if err != nil {
 		return err
 	}
-	defer urlStore.Close(ctx) //nolint:errcheck
-	slog.Info("successfully connected to url db!")
+	defer urlStore.Close()
+	slog.Info("successfully connected to url store!")
 
 	keyCron := cron.New(cfg.Key.CronSchedule, "key-generation")
-	cancelKeyCron, err := keyCron.Setup(jobs.KeyGenerationJob(keyStore))
+	cancelKeyCron, err := keyCron.Setup(jobs.KeyGenerationJob(urlStore))
 	defer cancelKeyCron()
 	if err != nil {
 		return err
 	}
 
 	urlCron := cron.New(cfg.Url.CronSchedule, "url-cleanup")
-	cancelUrlCron, err := urlCron.Setup(jobs.UrlCleanUpJob(keyStore, urlStore))
+	cancelUrlCron, err := urlCron.Setup(jobs.UrlCleanUpJob(urlStore))
 	defer cancelUrlCron()
 	if err != nil {
 		return err
@@ -68,7 +67,7 @@ func run() error {
 
 	serverErr := make(chan error, 1)
 
-	srv := server.New(keyStore, urlStore, cfg.Domain)
+	srv := server.New(urlStore, keyCache, cfg.Domain)
 	go func() {
 		serverErr <- srv.Start(cfg.Port)
 	}()

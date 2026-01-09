@@ -26,7 +26,6 @@ type Url struct {
 type Key struct {
 	CacheUrl     string
 	CronSchedule string
-	DbUrl        string
 }
 
 type cfg struct {
@@ -46,13 +45,12 @@ func ParseEnv() (*cfg, error) {
 		"API_DOMAIN":        "",
 		"KEY_CACHE_URL":     "",
 		"KEY_CRON_SCHEDULE": "",
-		"KEY_DB_URL":        "",
 		"LOG_LEVEL":         "",
 		"SERVER_PORT":       "",
 		"URL_CACHE_URL":     "",
 		"URL_CRON_SCHEDULE": "",
-		"URL_DB_NAME":       "",
-		"URL_DB_URL":        "",
+		"DB_NAME":           "",
+		"DB_URL":            "",
 	}
 
 	for key := range envVars {
@@ -66,14 +64,13 @@ func ParseEnv() (*cfg, error) {
 	Key := &Key{
 		CacheUrl:     envVars["KEY_CACHE_URL"],
 		CronSchedule: envVars["KEY_CRON_SCHEDULE"],
-		DbUrl:        envVars["KEY_DB_URL"],
 	}
 
 	Url := &Url{
 		CacheUrl:     envVars["URL_CACHE_URL"],
 		CronSchedule: envVars["URL_CRON_SCHEDULE"],
-		DbName:       envVars["URL_DB_NAME"],
-		DbUrl:        envVars["URL_DB_URL"],
+		DbName:       envVars["DB_NAME"],
+		DbUrl:        envVars["DB_URL"],
 	}
 
 	logLevel, ok := logLevelMap[envVars["LOG_LEVEL"]]

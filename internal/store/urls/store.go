@@ -3,37 +3,27 @@ package urls
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/Marie20767/url-shortener/internal/store/keys"
 	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
 
-const timeout = 5
-
 type UrlStore struct {
-	conn       *mongo.Database
-	collection string
-	cache      *Cache
+	pool     *pgxpool.Pool
+	urlCache *Cache
+	keyCache *keys.Cache
 }
 
-func connectDb(cfg *config.Url) (*mongo.Database, error) {
-	timeOut := time.Duration(timeout) * time.Second
-	clientOpts := options.Client().ApplyURI(cfg.DbUrl).SetConnectTimeout(timeOut)
-	mongoClient, err := mongo.Connect(clientOpts)
+func New(ctx context.Context, cfg *config.Url, keyCache *keys.Cache) (*UrlStore, error) {
+	dbPool, err := pgxpool.New(ctx, cfg.DbUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to url db: %w", err)
+		return nil, fmt.Errorf("failed to create new db pool: %w", err)
 	}
 
-	return mongoClient.Database(cfg.DbName), nil
-}
-
-func New(cfg *config.Url) (*UrlStore, error) {
-	dbConn, err := connectDb(cfg)
-	if err != nil {
-		return nil, err
+	if err := dbPool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to connect to db: %w", err)
 	}
 
 	newCache, err := NewCache(cfg.CacheUrl)
@@ -42,16 +32,16 @@ func New(cfg *config.Url) (*UrlStore, error) {
 	}
 
 	return &UrlStore{
-		conn:       dbConn,
-		collection: "urls",
-		cache:      newCache,
+		pool:     dbPool,
+		urlCache: newCache,
+		keyCache: keyCache,
 	}, nil
 }
 
 func (s *UrlStore) Ping(ctx context.Context) error {
-	return s.conn.Client().Ping(ctx, nil)
+	return s.pool.Ping(ctx)
 }
 
-func (s *UrlStore) Close(ctx context.Context) error {
-	return s.conn.Client().Disconnect(ctx)
+func (s *UrlStore) Close() {
+	s.pool.Close()
 }

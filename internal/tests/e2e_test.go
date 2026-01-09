@@ -18,18 +18,18 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	var err error
-	testResources, err = setupTestResources(ctx, &testing.T{})
+	testResources, err = setupTestResources(ctx)
 	if err != nil {
 		fmt.Printf("setup tests failed: %s\n", err)
 		if testResources != nil {
-			testResources.Cleanup(ctx, &testing.T{})
+			testResources.Cleanup(ctx)
 		}
 		os.Exit(1)
 	}
 
 	exitCode := m.Run()
 
-	testResources.Cleanup(ctx, &testing.T{})
+	testResources.Cleanup(ctx)
 	if exitCode != 0 {
 		slog.Error("tests failed", slog.Int("exit_code", exitCode))
 	}
@@ -44,18 +44,17 @@ type CreateResponse struct {
 func TestUrl(t *testing.T) {
 	t.Run("redirects to original url by short url", func(t *testing.T) {
 		apiDomain := os.Getenv("API_DOMAIN")
-		newKey := "abcde123"
+		newKey := "aBcdE123"
 		longUrl := "https://myveryveryveryveryveryveryveryveryveryveryveryveryveryveryverylongurl.com"
 
-		rows, err := testResources.KeyDbPool.Query(
+		_, err := testResources.DbPool.Exec(
 			t.Context(),
-			`INSERT INTO keys (key_value) VALUES ($1)`,
+			`INSERT INTO keys (id) VALUES ($1)`,
 			newKey,
 		)
 		if err != nil {
 			t.Fatalf("failed to insert new key: %v", err)
 		}
-		defer rows.Close()
 
 		createResp := createShortUrl(t, testResources.AppUrl, longUrl)
 		defer createResp.Body.Close() //nolint:errcheck
@@ -73,8 +72,8 @@ func TestUrl(t *testing.T) {
 
 		getResp := getLongUrl(t, testResources.AppUrl, newKey)
 		defer getResp.Body.Close() //nolint:errcheck
-		if getResp.StatusCode != http.StatusMovedPermanently {
-			t.Fatalf("expected 301 redirect, got %d", getResp.StatusCode)
+		if getResp.StatusCode != http.StatusFound {
+			t.Fatalf("expected 302 redirect, got %d", getResp.StatusCode)
 		}
 
 		location := getResp.Header.Get("Location")
@@ -94,7 +93,7 @@ func TestUrl(t *testing.T) {
 	})
 
 	t.Run("returns validation error with invalid key", func(t *testing.T) {
-		invalidKey := "1234bcd"
+		invalidKey := "1234Bcd"
 		resp := getLongUrl(t, testResources.AppUrl, invalidKey)
 		defer resp.Body.Close() //nolint:errcheck
 

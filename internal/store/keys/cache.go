@@ -6,16 +6,18 @@ import (
 	"log/slog"
 
 	"github.com/redis/go-redis/v9"
+
+	"github.com/Marie20767/url-shortener/internal/utils/config"
 )
+
+const cacheRefillThreshold = 10
 
 type Cache struct {
 	client *redis.Client
 }
 
-const cacheRefillThreshold = 10
-
-func NewCache(cacheUrl string) (*Cache, error) {
-	opt, err := redis.ParseURL(cacheUrl)
+func New(ctx context.Context, cfg *config.Key) (*Cache, error) {
+	opt, err := redis.ParseURL(cfg.CacheUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new key cache: %w", err)
 	}
@@ -23,6 +25,10 @@ func NewCache(cacheUrl string) (*Cache, error) {
 	return &Cache{
 		client: redis.NewClient(opt),
 	}, nil
+}
+
+func (c *Cache) Ping(ctx context.Context) error {
+	return c.client.Ping(ctx).Err()
 }
 
 // lua script needed to ensure atomic key fetching from the cache across all server instances
@@ -58,15 +64,15 @@ func (c *Cache) Get(ctx context.Context) (string, bool) {
 	return key, true
 }
 
-func (c *Cache) Add(ctx context.Context, keyMap map[string]string) {
+func (c *Cache) Set(ctx context.Context, keyMap map[string]string) {
 	err := c.client.MSet(ctx, keyMap).Err()
 	if err != nil {
 		slog.Error("failed to insert keys into cache", slog.Any("error", err))
 	}
 }
 
-func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
-	currentCacheSize := c.getSize(ctx)
+func (c *Cache) ShouldRefill(ctx context.Context) bool {
+	currentCacheSize := c.size(ctx)
 	slog.Debug("cache", "size", currentCacheSize)
 
 	if currentCacheSize < int64(cacheRefillThreshold) {
@@ -77,16 +83,12 @@ func (c *Cache) ShouldRefillCache(ctx context.Context) bool {
 	return false
 }
 
-func (c *Cache) getSize(ctx context.Context) int64 {
+func (c *Cache) size(ctx context.Context) int64 {
 	keysCount, err := c.client.DBSize(ctx).Result()
 	if err != nil {
-		slog.Error("failed to get keys cache size", slog.Any("error", err))
+		slog.Error("failed to get key cache size", slog.Any("error", err))
 		return 0
 	}
 
 	return keysCount
-}
-
-func (c *Cache) Ping(ctx context.Context) error {
-	return c.client.Ping(ctx).Err()
 }
