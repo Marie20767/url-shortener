@@ -31,7 +31,7 @@ func (c *Cache) Ping(ctx context.Context) error {
 	return c.client.Ping(ctx).Err()
 }
 
-// lua script needed to ensure atomic key fetching from the cache across all server instances
+// lua script needed to ensure atomic key fetching from the cache across goroutines
 var getAndDelScript = redis.NewScript(`
 	local key = redis.call("RANDOMKEY")
 	if not key then
