@@ -66,7 +66,6 @@ func run() error {
 	}
 
 	serverErr := make(chan error, 1)
-
 	srv := server.New(urlStore, keyCache, cfg.Domain)
 	go func() {
 		serverErr <- srv.Start(cfg.Port)
@@ -76,8 +75,8 @@ func run() error {
 	select {
 	case <-ctx.Done():
 		slog.Info("shutdown signal received")
-	case err := <-serverErr:
-		return err
+	case err = <-serverErr:
+		slog.Error("server error", slog.Any("error", err))
 	}
 
 	// cancel cron contexts to prevent new jobs from starting
@@ -92,9 +91,9 @@ func run() error {
 	<-stopUrlCtx.Done()
 	slog.Info("url cron jobs completed")
 
-	if err := srv.Stop(); err != nil {
-		slog.Error("server shutdown error", slog.Any("error", err))
+	if shutdownErr := srv.Stop(); shutdownErr != nil {
+		slog.Error("server shutdown error", slog.Any("error", shutdownErr))
 	}
 
-	return nil
+	return err
 }
