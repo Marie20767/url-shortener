@@ -20,8 +20,6 @@ func main() {
 		slog.Error("run failed", slog.Any("error", err))
 		os.Exit(1)
 	}
-
-	slog.Info("shutting down gracefully...")
 }
 
 func run() error {
