@@ -1,12 +1,12 @@
 # =========================
 # Stage 1: Build the binary
 # =========================
-FROM golang:1.25 AS builder
+FROM golang:1.26 AS builder
 
 WORKDIR /app
 
 COPY go.mod go.sum Makefile ./
-RUN make dep
+RUN go mod download
 
 COPY . .
 
