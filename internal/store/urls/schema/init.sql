@@ -11,3 +11,5 @@ CREATE TABLE urls (
 
   CONSTRAINT fk_short FOREIGN KEY(short) REFERENCES keys(id)
 );
+
+CREATE INDEX ON urls (expiry);
