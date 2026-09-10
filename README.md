@@ -149,7 +149,7 @@ Create the following env files (you can use `.env.example` as a reference for th
 
 Before deploying, add the following secrets to your GitHub repository:
 
-- `DOCKER_USER` – your Docker Hub username
-- `DOCKER_PASSWORD` – your Docker Hub password
+- `DOCKERHUB_USERNAME` – your Docker Hub username
+- `DOCKERHUB_TOKEN` – your Docker Hub token for this repo
 
 These secrets are required by the release workflow to push your application’s Docker image to Docker Hub.
