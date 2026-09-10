@@ -40,11 +40,13 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool) {
 
 func (c *Cache) Set(ctx context.Context, urlData *model.UrlData, currentTimestamp time.Time) {
 	var expiry time.Duration
-	switch urlData.Expiry {
-	case nil:
+	if urlData.Expiry == nil {
 		expiry = 0
-	default:
-		expiry = currentTimestamp.Sub(*urlData.Expiry)
+	} else {
+		expiry = urlData.Expiry.Sub(currentTimestamp)
+		if expiry <= 0 { // already expired
+			return
+		}
 	}
 
 	err := c.client.Set(ctx, urlData.Key, urlData.Url, expiry).Err()
